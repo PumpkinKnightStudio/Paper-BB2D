@@ -1,0 +1,73 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: TreemanKing <67459602+TreemanKing@users.noreply.github.com>
+Date: Wed, 16 Aug 2023 11:53:44 +1000
+Subject: [PATCH] Add SpawnerPlayerSearchEvent
+
+This patch introduces a new event, SpawnerPlayerSearchEvent. This event is designed to be fired when a mob spawner searches for nearby players to activate. It provides the ability to control and customize the activation logic of mob spawners, preventing them from searching and spawning mobs if desired
+
+diff --git a/src/main/java/net/minecraft/world/level/BaseSpawner.java b/src/main/java/net/minecraft/world/level/BaseSpawner.java
+index 633500aefd515df5dadda3802b94079f75a03fa0..10e9596465523495637a442b2988a36cdaacd6af 100644
+--- a/src/main/java/net/minecraft/world/level/BaseSpawner.java
++++ b/src/main/java/net/minecraft/world/level/BaseSpawner.java
+@@ -46,6 +46,7 @@ public abstract class BaseSpawner {
+     public int requiredPlayerRange = 16;
+     public int spawnRange = 4;
+     private int tickDelay = 0; // Paper
++    private int backoffTicks = 0; // Paper
+ 
+     public BaseSpawner() {}
+ 
+@@ -55,7 +56,7 @@ public abstract class BaseSpawner {
+     }
+ 
+     public boolean isNearPlayer(Level world, BlockPos pos) {
+-        return world.hasNearbyAlivePlayerThatAffectsSpawning((double) pos.getX() + 0.5D, (double) pos.getY() + 0.5D, (double) pos.getZ() + 0.5D, (double) this.requiredPlayerRange); // Paper - Affects Spawning API
++        return world.hasNearbyAlivePlayerThatAffectsSpawning((double) pos.getX() + 0.5D, (double) pos.getY() + 0.5D, (double) pos.getZ() + 0.5D, (double) this.requiredPlayerRange); // Paper - Affects Spawning API // diff on change (activatingPlayers)
+     }
+ 
+     public void clientTick(Level world, BlockPos pos) {
+@@ -82,11 +83,42 @@ public abstract class BaseSpawner {
+     public void serverTick(ServerLevel world, BlockPos pos) {
+         if (spawnCount <= 0 || maxNearbyEntities <= 0) return; // Paper - Ignore impossible spawn tick
+         // Paper start - Configurable mob spawner tick rate
+-        if (spawnDelay > 0 && --tickDelay > 0) return;
++        --tickDelay;
++        --backoffTicks;
++        if (spawnDelay > 0 && tickDelay > 0 && backoffTicks > 0) return; // Paper
+         tickDelay = world.paperConfig().tickRates.mobSpawner;
+         if (tickDelay == -1) { return; } // If disabled
+         // Paper end
+-        if (this.isNearPlayer(world, pos)) {
++
++        // Paper start - SpawnerPlayerSearchEvent
++        java.util.function.Supplier<java.util.Collection<org.bukkit.entity.Player>> lazyActivatingPlayersSup = com.google.common.base.Suppliers.memoize(() ->
++            com.google.common.collect.Collections2.transform(
++                world.getNearbyPlayers(
++                    (double) pos.getX() + 0.5D,
++                    (double) pos.getY() + 0.5D,
++                    (double) pos.getZ() + 0.5D,
++                    (double) this.requiredPlayerRange,
++                    net.minecraft.world.entity.EntitySelector.PLAYER_AFFECTS_SPAWNING),
++                net.minecraft.server.level.ServerPlayer::getBukkitEntity)
++        );
++
++        java.util.Collection<org.bukkit.entity.Player> activatingPlayers = new com.google.common.collect.ForwardingCollection<>() {
++            @Override
++            protected java.util.Collection<org.bukkit.entity.Player> delegate() {
++                return lazyActivatingPlayersSup.get();
++            }
++        };
++
++        io.papermc.paper.event.block.SpawnerPlayerSearchEvent spawnerPlayerSearchEvent = new io.papermc.paper.event.block.SpawnerPlayerSearchEvent(io.papermc.paper.util.MCUtil.toLocation(world, pos), activatingPlayers, Math.max(0, backoffTicks));
++
++        spawnerPlayerSearchEvent.callEvent();
++        org.bukkit.event.Event.Result result = spawnerPlayerSearchEvent.getSearchResult();
++        backoffTicks = spawnerPlayerSearchEvent.getBackoffTicks();
++
++        if (result == org.bukkit.event.Event.Result.DENY) return;
++
++        if (result == org.bukkit.event.Event.Result.ALLOW || !activatingPlayers.isEmpty()) {
++            // Paper end
+             if (this.spawnDelay < -tickDelay) {
+                 this.delay(world, pos);
+             }
