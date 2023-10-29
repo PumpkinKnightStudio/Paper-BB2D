@@ -5,10 +5,10 @@ Subject: [PATCH] add isDeeplySleeping to HumanEntity
 
 
 diff --git a/src/main/java/org/bukkit/entity/HumanEntity.java b/src/main/java/org/bukkit/entity/HumanEntity.java
-index 4054d2c836342f0e4bcbd33adb13f50daea5086a..ff1ebe184ba5a1bdc8e2784025b07d3bb90a5078 100644
+index be37de43f44c1aaabd5dab9a58545aba242f14d0..f32af650157bf5df770ac42d8e3dcf560d68aa3c 100644
 --- a/src/main/java/org/bukkit/entity/HumanEntity.java
 +++ b/src/main/java/org/bukkit/entity/HumanEntity.java
-@@ -358,6 +358,15 @@ public interface HumanEntity extends LivingEntity, AnimalTamer, InventoryHolder
+@@ -543,6 +543,15 @@ public interface HumanEntity extends LivingEntity, AnimalTamer, InventoryHolder
      void setHurtDirection(float hurtDirection);
      // Paper end
  
