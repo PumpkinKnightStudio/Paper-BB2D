@@ -21,12 +21,12 @@ index cd57a7f3fdedd396d3b8dc4d195eb27bb32969eb..61bc50ef899d2867d4f3c762b71012b2
  
                  return true;
 diff --git a/src/main/java/net/minecraft/world/entity/ExperienceOrb.java b/src/main/java/net/minecraft/world/entity/ExperienceOrb.java
-index f25466e132cb6b0012dc336877fdf17b88a12ddc..9d1cce3fb02bb2c3ff71055fbafc974b6b98625a 100644
+index 9fe029133179297413995bd41051b7629375cb6f..c95308fa486ed67909c490ee1ab58ba64d43ef5c 100644
 --- a/src/main/java/net/minecraft/world/entity/ExperienceOrb.java
 +++ b/src/main/java/net/minecraft/world/entity/ExperienceOrb.java
 @@ -39,13 +39,67 @@ public class ExperienceOrb extends Entity {
      public int value;
-     private int count;
+     public int count;
      private Player followingPlayer;
 +    // Paper start
 +    @javax.annotation.Nullable
@@ -133,7 +133,7 @@ index f25466e132cb6b0012dc336877fdf17b88a12ddc..9d1cce3fb02bb2c3ff71055fbafc974b
  
      @Override
 diff --git a/src/main/java/net/minecraft/world/entity/LivingEntity.java b/src/main/java/net/minecraft/world/entity/LivingEntity.java
-index c178a564156562d1dd2c0a30eec3040cb8b4c2d1..3d99e7ea6109261dc5d8de610791ec08dde180b4 100644
+index b60e970c604ae778cc0b5eb54cdfebceef91b2df..59d3ae122239f924d71d4e9d212b3bd343b80609 100644
 --- a/src/main/java/net/minecraft/world/entity/LivingEntity.java
 +++ b/src/main/java/net/minecraft/world/entity/LivingEntity.java
 @@ -1789,7 +1789,8 @@ public abstract class LivingEntity extends Entity implements Attackable {
@@ -266,7 +266,7 @@ index af6829c25fcd186adc3575d50cab6d46db9a2fac..5c77992e0c49eb217dd66657b3516422
                      // CraftBukkit end
                      if (itemstack1.is(ItemTags.FISHES)) {
 diff --git a/src/main/java/net/minecraft/world/entity/projectile/ThrownExperienceBottle.java b/src/main/java/net/minecraft/world/entity/projectile/ThrownExperienceBottle.java
-index 2191af62f4202413738542d738456ca71febdbf4..5b3059460d4b18d984483d655526d83204fb1c73 100644
+index 5d0e2c53d41e897532a8ec3c0a7b33e9b60e9ab5..e53046c6d47b4fd3d82132bc980a31b9491df6a7 100644
 --- a/src/main/java/net/minecraft/world/entity/projectile/ThrownExperienceBottle.java
 +++ b/src/main/java/net/minecraft/world/entity/projectile/ThrownExperienceBottle.java
 @@ -51,7 +51,7 @@ public class ThrownExperienceBottle extends ThrowableItemProjectile {
@@ -324,7 +324,7 @@ index e72ed2ed8664cbc408cbe1e38f1f0acacc3841dd..2f628f36c32752d1bac910e180b90639
  
      @Override
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftRegionAccessor.java b/src/main/java/org/bukkit/craftbukkit/CraftRegionAccessor.java
-index 8beb4670fffa2df0a9bd64ebb8810b25ce670f16..134b138abdf17fae340226ecac3868ad7a993086 100644
+index 31a5694a0a9a504eac6c068907083eccdee94acf..b286deebacaf00ff21585cfbc75291a8d80965c4 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftRegionAccessor.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftRegionAccessor.java
 @@ -943,7 +943,7 @@ public abstract class CraftRegionAccessor implements RegionAccessor {
