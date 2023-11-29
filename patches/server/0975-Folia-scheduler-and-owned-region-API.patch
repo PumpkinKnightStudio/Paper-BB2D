@@ -1131,7 +1131,7 @@ index 0000000000000000000000000000000000000000..d306f911757a4d556c82c0070d4837db
 +    }
 +}
 diff --git a/src/main/java/net/minecraft/server/MinecraftServer.java b/src/main/java/net/minecraft/server/MinecraftServer.java
-index 9fff00b3706a97ba71a80f2ba39577b229325e02..601a10447f5b5b68fe032665cbd00e35993983de 100644
+index 9fff00b3706a97ba71a80f2ba39577b229325e02..67dd41305c373c12dbb9e56ae9c99ef7e1de79a7 100644
 --- a/src/main/java/net/minecraft/server/MinecraftServer.java
 +++ b/src/main/java/net/minecraft/server/MinecraftServer.java
 @@ -305,6 +305,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
@@ -1152,9 +1152,9 @@ index 9fff00b3706a97ba71a80f2ba39577b229325e02..601a10447f5b5b68fe032665cbd00e35
 +            if (entity.isRemoved()) {
 +                continue;
 +            }
-+            org.bukkit.craftbukkit.entity.CraftEntity craftEntity = entity.getBukkitEntityRaw();
-+            if (craftEntity != null) {
-+                craftEntity.taskScheduler.executeTick();
++            org.bukkit.craftbukkit.entity.CraftEntity bukkit = entity.getBukkitEntityRaw();
++            if (bukkit != null) {
++                bukkit.taskScheduler.executeTick();
 +            }
 +        }
 +        // Paper end - Folia scheduler API
