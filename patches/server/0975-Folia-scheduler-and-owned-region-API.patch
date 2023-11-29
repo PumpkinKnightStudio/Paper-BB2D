@@ -18,7 +18,7 @@ the schedulers depending on the result of the ownership check.
 
 diff --git a/src/main/java/io/papermc/paper/threadedregions/EntityScheduler.java b/src/main/java/io/papermc/paper/threadedregions/EntityScheduler.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..fd933afbfe1609da456d9f38d5cdf86c0c46c6b6
+index 0000000000000000000000000000000000000000..74558643fa25ee708a5f24c2b5638ac06fa4e6ed
 --- /dev/null
 +++ b/src/main/java/io/papermc/paper/threadedregions/EntityScheduler.java
 @@ -0,0 +1,191 @@
@@ -61,7 +61,7 @@ index 0000000000000000000000000000000000000000..fd933afbfe1609da456d9f38d5cdf86c
 +     * The Entity. Note that it is the CraftEntity, since only that class properly tracks world transfers.
 +     */
 +    public final CraftEntity entity;
-+    public final MinecraftServer server; // SparklyPaper - skip EntityScheduler's executeTick checks if there isn't any tasks to be run
++    public final MinecraftServer server;
 +
 +    private static final record ScheduledTask(Consumer<? extends Entity> run, Consumer<? extends Entity> retired) {}
 +
@@ -152,7 +152,7 @@ index 0000000000000000000000000000000000000000..fd933afbfe1609da456d9f38d5cdf86c
 +            if (this.tickCount == RETIRED_TICK_COUNT) {
 +                return false;
 +            }
-+            this.server.entitiesWithScheduledTasks.add(entity); // SparklyPaper - skip EntityScheduler's executeTick checks if there isn't any tasks to be run
++            this.server.entitiesWithScheduledTasks.add(entity);
 +            this.oneTimeDelayed.computeIfAbsent(this.tickCount + Math.max(1L, delay), (final long keyInMap) -> {
 +                return new ArrayList<>();
 +            }).add(task);
