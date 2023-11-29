@@ -8,15 +8,13 @@ Areas affected by lag comepnsation:
  - Eating food items
 
 diff --git a/src/main/java/net/minecraft/server/MinecraftServer.java b/src/main/java/net/minecraft/server/MinecraftServer.java
-index 601a10447f5b5b68fe032665cbd00e35993983de..4b7d1fb2fd097407214444dd5687f48c4ae24f39 100644
+index de0c8f073db66d65083d549b769151ab2beab27d..85c6ac13c75d29d323d4c9efcc69f642becf2609 100644
 --- a/src/main/java/net/minecraft/server/MinecraftServer.java
 +++ b/src/main/java/net/minecraft/server/MinecraftServer.java
-@@ -305,7 +305,10 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
-     public volatile Thread shutdownThread; // Paper
+@@ -306,6 +306,9 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
      public volatile boolean abnormalExit = false; // Paper
      public boolean isIteratingOverLevels = false; // Paper
--    public final Set<Entity> entitiesWithScheduledTasks = java.util.concurrent.ConcurrentHashMap.newKeySet(); // Paper - Folia schedulers
-+    public final Set<org.bukkit.craftbukkit.entity.CraftEntity> entitiesWithScheduledTasks = java.util.concurrent.ConcurrentHashMap.newKeySet(); // Paper - Folia schedulers
+     public final Set<Entity> entitiesWithScheduledTasks = java.util.concurrent.ConcurrentHashMap.newKeySet(); // Paper - Folia schedulers
 +    // Paper start - lag compensation
 +    public static final long SERVER_INIT = System.nanoTime();
 +    // Paper end - lag compensation
