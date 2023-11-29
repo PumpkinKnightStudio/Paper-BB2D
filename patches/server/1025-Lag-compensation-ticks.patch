@@ -8,20 +8,22 @@ Areas affected by lag comepnsation:
  - Eating food items
 
 diff --git a/src/main/java/net/minecraft/server/MinecraftServer.java b/src/main/java/net/minecraft/server/MinecraftServer.java
-index 27d134de7788886c4d9cb614e0206661fe53dd34..0c3c8c3b929266761179c443bcd46a3d2f8e8418 100644
+index 601a10447f5b5b68fe032665cbd00e35993983de..4b7d1fb2fd097407214444dd5687f48c4ae24f39 100644
 --- a/src/main/java/net/minecraft/server/MinecraftServer.java
 +++ b/src/main/java/net/minecraft/server/MinecraftServer.java
-@@ -306,6 +306,9 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -305,7 +305,10 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+     public volatile Thread shutdownThread; // Paper
      public volatile boolean abnormalExit = false; // Paper
      public boolean isIteratingOverLevels = false; // Paper
-     public final Set<org.bukkit.craftbukkit.entity.CraftEntity> entitiesWithScheduledTasks = java.util.concurrent.ConcurrentHashMap.newKeySet(); // Paper - Folia schedulers
+-    public final Set<Entity> entitiesWithScheduledTasks = java.util.concurrent.ConcurrentHashMap.newKeySet(); // Paper - Folia schedulers
++    public final Set<org.bukkit.craftbukkit.entity.CraftEntity> entitiesWithScheduledTasks = java.util.concurrent.ConcurrentHashMap.newKeySet(); // Paper - Folia schedulers
 +    // Paper start - lag compensation
 +    public static final long SERVER_INIT = System.nanoTime();
 +    // Paper end - lag compensation
  
      public static <S extends MinecraftServer> S spin(Function<Thread, S> serverFactory) {
          AtomicReference<S> atomicreference = new AtomicReference();
-@@ -1519,6 +1522,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1521,6 +1524,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
          Iterator iterator = this.getAllLevels().iterator(); // Paper - move down
          while (iterator.hasNext()) {
              ServerLevel worldserver = (ServerLevel) iterator.next();

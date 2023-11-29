@@ -18,7 +18,7 @@ the schedulers depending on the result of the ownership check.
 
 diff --git a/src/main/java/io/papermc/paper/threadedregions/EntityScheduler.java b/src/main/java/io/papermc/paper/threadedregions/EntityScheduler.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..8f74787d89b09f52687f0f7ff0a4bfedb66c1f49
+index 0000000000000000000000000000000000000000..df4cf7d99bdce0efa606cb30f7e323efd98a972a
 --- /dev/null
 +++ b/src/main/java/io/papermc/paper/threadedregions/EntityScheduler.java
 @@ -0,0 +1,191 @@
@@ -88,15 +88,15 @@ index 0000000000000000000000000000000000000000..8f74787d89b09f52687f0f7ff0a4bfed
 +     * @throws IllegalStateException If the scheduler is already retired.
 +     */
 +    public void retire() {
++        final Entity thisEntity = this.entity.getHandleRaw();
++
 +        synchronized (this.stateLock) {
 +            if (this.tickCount == RETIRED_TICK_COUNT) {
 +                throw new IllegalStateException("Already retired");
 +            }
 +            this.tickCount = RETIRED_TICK_COUNT;
-+            this.server.entitiesWithScheduledTasks.remove(this.entity);
++            this.server.entitiesWithScheduledTasks.remove(thisEntity);
 +        }
-+
-+        final Entity thisEntity = this.entity.getHandleRaw();
 +
 +        // correctly handle and order retiring while running executeTick
 +        for (int i = 0, len = this.currentlyExecuting.size(); i < len; ++i) {
@@ -152,7 +152,7 @@ index 0000000000000000000000000000000000000000..8f74787d89b09f52687f0f7ff0a4bfed
 +            if (this.tickCount == RETIRED_TICK_COUNT) {
 +                return false;
 +            }
-+            this.server.entitiesWithScheduledTasks.add(this.entity);
++            this.server.entitiesWithScheduledTasks.add(this.entity.getHandleRaw());
 +            this.oneTimeDelayed.computeIfAbsent(this.tickCount + Math.max(1L, delay), (final long keyInMap) -> {
 +                return new ArrayList<>();
 +            }).add(task);
@@ -174,7 +174,7 @@ index 0000000000000000000000000000000000000000..8f74787d89b09f52687f0f7ff0a4bfed
 +        synchronized (this.stateLock) {
 +            // Do we *really* have scheduled tasks tho?
 +            if (this.currentlyExecuting.isEmpty() && this.oneTimeDelayed.isEmpty()) { // Check if we have any pending tasks and, if not, skip!
-+                this.server.entitiesWithScheduledTasks.remove(this.entity);
++                this.server.entitiesWithScheduledTasks.remove(thisEntity);
 +                return;
 +            }
 +            if (this.tickCount == RETIRED_TICK_COUNT) {
@@ -1131,29 +1131,31 @@ index 0000000000000000000000000000000000000000..d306f911757a4d556c82c0070d4837db
 +    }
 +}
 diff --git a/src/main/java/net/minecraft/server/MinecraftServer.java b/src/main/java/net/minecraft/server/MinecraftServer.java
-index 9fff00b3706a97ba71a80f2ba39577b229325e02..27d134de7788886c4d9cb614e0206661fe53dd34 100644
+index 9fff00b3706a97ba71a80f2ba39577b229325e02..601a10447f5b5b68fe032665cbd00e35993983de 100644
 --- a/src/main/java/net/minecraft/server/MinecraftServer.java
 +++ b/src/main/java/net/minecraft/server/MinecraftServer.java
 @@ -305,6 +305,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
      public volatile Thread shutdownThread; // Paper
      public volatile boolean abnormalExit = false; // Paper
      public boolean isIteratingOverLevels = false; // Paper
-+    public final Set<org.bukkit.craftbukkit.entity.CraftEntity> entitiesWithScheduledTasks = java.util.concurrent.ConcurrentHashMap.newKeySet(); // Paper - Folia schedulers
++    public final Set<Entity> entitiesWithScheduledTasks = java.util.concurrent.ConcurrentHashMap.newKeySet(); // Paper - Folia schedulers
  
      public static <S extends MinecraftServer> S spin(Function<Thread, S> serverFactory) {
          AtomicReference<S> atomicreference = new AtomicReference();
-@@ -1466,6 +1467,16 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1466,6 +1467,18 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
          MinecraftTimings.bukkitSchedulerTimer.startTiming(); // Spigot // Paper
          this.server.getScheduler().mainThreadHeartbeat(this.tickCount); // CraftBukkit
          MinecraftTimings.bukkitSchedulerTimer.stopTiming(); // Spigot // Paper
 +        // Paper start - Folia scheduler API
 +        ((io.papermc.paper.threadedregions.scheduler.FoliaGlobalRegionScheduler) Bukkit.getGlobalRegionScheduler()).tick();
-+        for (final org.bukkit.craftbukkit.entity.CraftEntity craftEntity : entitiesWithScheduledTasks) {
-+            Entity entity = craftEntity.getHandleRaw();
++        for (final Entity entity : entitiesWithScheduledTasks) {
 +            if (entity.isRemoved()) {
 +                continue;
 +            }
-+            craftEntity.taskScheduler.executeTick();
++            org.bukkit.craftbukkit.entity.CraftEntity craftEntity = entity.getBukkitEntityRaw();
++            if (craftEntity != null) {
++                craftEntity.taskScheduler.executeTick();
++            }
 +        }
 +        // Paper end - Folia scheduler API
          io.papermc.paper.adventure.providers.ClickCallbackProviderImpl.CALLBACK_MANAGER.handleQueue(this.tickCount); // Paper
