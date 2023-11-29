@@ -1131,7 +1131,7 @@ index 0000000000000000000000000000000000000000..d306f911757a4d556c82c0070d4837db
 +    }
 +}
 diff --git a/src/main/java/net/minecraft/server/MinecraftServer.java b/src/main/java/net/minecraft/server/MinecraftServer.java
-index 9fff00b3706a97ba71a80f2ba39577b229325e02..67dd41305c373c12dbb9e56ae9c99ef7e1de79a7 100644
+index 9fff00b3706a97ba71a80f2ba39577b229325e02..de0c8f073db66d65083d549b769151ab2beab27d 100644
 --- a/src/main/java/net/minecraft/server/MinecraftServer.java
 +++ b/src/main/java/net/minecraft/server/MinecraftServer.java
 @@ -305,6 +305,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
@@ -1152,7 +1152,7 @@ index 9fff00b3706a97ba71a80f2ba39577b229325e02..67dd41305c373c12dbb9e56ae9c99ef7
 +            if (entity.isRemoved()) {
 +                continue;
 +            }
-+            org.bukkit.craftbukkit.entity.CraftEntity bukkit = entity.getBukkitEntityRaw();
++            final org.bukkit.craftbukkit.entity.CraftEntity bukkit = entity.getBukkitEntityRaw();
 +            if (bukkit != null) {
 +                bukkit.taskScheduler.executeTick();
 +            }
