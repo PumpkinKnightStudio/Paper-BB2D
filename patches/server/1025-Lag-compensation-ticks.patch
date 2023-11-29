@@ -8,20 +8,20 @@ Areas affected by lag comepnsation:
  - Eating food items
 
 diff --git a/src/main/java/net/minecraft/server/MinecraftServer.java b/src/main/java/net/minecraft/server/MinecraftServer.java
-index 1bac9f7894321b5710f5475f6598ec9f3ccd94d3..8f31413c939cc2b0454ad3d9a1b618dbae449d00 100644
+index 27d134de7788886c4d9cb614e0206661fe53dd34..0c3c8c3b929266761179c443bcd46a3d2f8e8418 100644
 --- a/src/main/java/net/minecraft/server/MinecraftServer.java
 +++ b/src/main/java/net/minecraft/server/MinecraftServer.java
-@@ -305,6 +305,9 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
-     public volatile Thread shutdownThread; // Paper
+@@ -306,6 +306,9 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
      public volatile boolean abnormalExit = false; // Paper
      public boolean isIteratingOverLevels = false; // Paper
+     public final Set<org.bukkit.craftbukkit.entity.CraftEntity> entitiesWithScheduledTasks = java.util.concurrent.ConcurrentHashMap.newKeySet(); // Paper - Folia schedulers
 +    // Paper start - lag compensation
 +    public static final long SERVER_INIT = System.nanoTime();
 +    // Paper end - lag compensation
  
      public static <S extends MinecraftServer> S spin(Function<Thread, S> serverFactory) {
          AtomicReference<S> atomicreference = new AtomicReference();
-@@ -1522,6 +1525,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1519,6 +1522,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
          Iterator iterator = this.getAllLevels().iterator(); // Paper - move down
          while (iterator.hasNext()) {
              ServerLevel worldserver = (ServerLevel) iterator.next();
@@ -30,7 +30,7 @@ index 1bac9f7894321b5710f5475f6598ec9f3ccd94d3..8f31413c939cc2b0454ad3d9a1b618db
              net.minecraft.world.level.block.entity.HopperBlockEntity.skipHopperEvents = worldserver.paperConfig().hopper.disableMoveEvent || org.bukkit.event.inventory.InventoryMoveItemEvent.getHandlerList().getRegisteredListeners().length == 0; // Paper
              worldserver.hasEntityMoveEvent =  io.papermc.paper.event.entity.EntityMoveEvent.getHandlerList().getRegisteredListeners().length > 0; // Paper
 diff --git a/src/main/java/net/minecraft/server/level/ServerLevel.java b/src/main/java/net/minecraft/server/level/ServerLevel.java
-index d38559bd6071e2e37dea46068ead80a24702ff3b..ee6d9c19dbc01d46c60d0067664266c203087d8e 100644
+index deebfe66d9c0f799043c3458a0108dc18bfdf15f..4296e0fec900ac0be4f1ebbc539e60f28f96a9cc 100644
 --- a/src/main/java/net/minecraft/server/level/ServerLevel.java
 +++ b/src/main/java/net/minecraft/server/level/ServerLevel.java
 @@ -564,6 +564,17 @@ public class ServerLevel extends Level implements WorldGenLevel {

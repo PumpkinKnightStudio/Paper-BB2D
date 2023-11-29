@@ -5,10 +5,10 @@ Subject: [PATCH] Fix missing event call for entity teleport API
 
 
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java
-index 0e6c7284b9aee6c5f2454a3a095ebf349f887740..9f843b89dc20b91bf7243facee8486d525e4a1b3 100644
+index f1f00a4caadf1b454588daa85d71f0ffa3e0d833..93ab357ebe65dcb2a3c3d13aa01d65e613eacc38 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java
-@@ -603,6 +603,17 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
+@@ -604,6 +604,17 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
              return false;
          }
  
