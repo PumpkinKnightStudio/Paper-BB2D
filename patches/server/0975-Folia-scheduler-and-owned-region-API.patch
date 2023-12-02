@@ -18,7 +18,7 @@ the schedulers depending on the result of the ownership check.
 
 diff --git a/src/main/java/io/papermc/paper/threadedregions/EntityScheduler.java b/src/main/java/io/papermc/paper/threadedregions/EntityScheduler.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..df4cf7d99bdce0efa606cb30f7e323efd98a972a
+index 0000000000000000000000000000000000000000..ba5ff3af4d3af6f8ec4a47262aafb50ff1348549
 --- /dev/null
 +++ b/src/main/java/io/papermc/paper/threadedregions/EntityScheduler.java
 @@ -0,0 +1,191 @@
@@ -172,13 +172,13 @@ index 0000000000000000000000000000000000000000..df4cf7d99bdce0efa606cb30f7e323ef
 +        TickThread.ensureTickThread(thisEntity, "May not tick entity scheduler asynchronously");
 +        final List<ScheduledTask> toRun;
 +        synchronized (this.stateLock) {
++            if (this.tickCount == RETIRED_TICK_COUNT) {
++                throw new IllegalStateException("Ticking retired scheduler");
++            }
 +            // Do we *really* have scheduled tasks tho?
 +            if (this.currentlyExecuting.isEmpty() && this.oneTimeDelayed.isEmpty()) { // Check if we have any pending tasks and, if not, skip!
 +                this.server.entitiesWithScheduledTasks.remove(thisEntity);
 +                return;
-+            }
-+            if (this.tickCount == RETIRED_TICK_COUNT) {
-+                throw new IllegalStateException("Ticking retired scheduler");
 +            }
 +            ++this.tickCount;
 +            if (this.oneTimeDelayed.isEmpty()) {
