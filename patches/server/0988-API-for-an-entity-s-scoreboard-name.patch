@@ -7,10 +7,10 @@ Was obtainable through different methods, but you had to use different
 methods depending on the implementation of Entity you were working with.
 
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java
-index 8472b566bac933d2982683b01dac7eb5e3172192..d57856bee23cd0fd22d0c2141c77c978dae7f8c6 100644
+index 7bd3a7161f131f69187b951249f4296725d33d9f..ee11f0f35911a404ddddf5dceb2114acedda3100 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java
-@@ -1506,4 +1506,11 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
+@@ -1507,4 +1507,11 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
          return !this.getHandle().level().noCollision(this.getHandle(), aabb);
      }
      // Paper End - Collision API
