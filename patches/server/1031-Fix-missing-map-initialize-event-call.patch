@@ -5,10 +5,10 @@ Subject: [PATCH] Fix missing map initialize event call
 
 
 diff --git a/src/main/java/net/minecraft/server/level/ServerLevel.java b/src/main/java/net/minecraft/server/level/ServerLevel.java
-index 19ffb121934e9249d18fa53cae1ae892dfd7f8d4..584a768f2ce1c98a1de7749060c47f21721f9055 100644
+index 21189ad18884c619655745bba62c3126d5a392c3..6f9e788c53b0ebe062701256d2f81593b455a5c8 100644
 --- a/src/main/java/net/minecraft/server/level/ServerLevel.java
 +++ b/src/main/java/net/minecraft/server/level/ServerLevel.java
-@@ -2100,7 +2100,23 @@ public class ServerLevel extends Level implements WorldGenLevel {
+@@ -2142,7 +2142,23 @@ public class ServerLevel extends Level implements WorldGenLevel {
      @Nullable
      @Override
      public MapItemSavedData getMapData(String id) {
