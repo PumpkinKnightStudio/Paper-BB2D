@@ -59,7 +59,7 @@ index 18dc5ef7892c24f4071c8c0621ac412a5d8767bd..c98e4469fa8940762c26a8d787bfabe4
              });
  
 diff --git a/src/main/java/net/minecraft/world/entity/Entity.java b/src/main/java/net/minecraft/world/entity/Entity.java
-index fa24d236ed330b417306f137d441bb08dc79a3f5..5397d84d790c32d369b0726db16571348285d8fb 100644
+index 42b2d8c7ba5d23c9df4bb7fa02bf617c17e37a62..dc70161b675a04885f0335d57071fc62c447029e 100644
 --- a/src/main/java/net/minecraft/world/entity/Entity.java
 +++ b/src/main/java/net/minecraft/world/entity/Entity.java
 @@ -235,6 +235,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
@@ -68,9 +68,9 @@ index fa24d236ed330b417306f137d441bb08dc79a3f5..5397d84d790c32d369b0726db1657134
      // Paper end
 +    public org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason spawnReason; // Paper
  
-     public com.destroystokyo.paper.loottable.PaperLootableInventoryData lootableData; // Paper
      private CraftEntity bukkitEntity;
-@@ -2212,6 +2213,9 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
+ 
+@@ -2211,6 +2212,9 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
                  }
                  nbttagcompound.put("Paper.Origin", this.newDoubleList(origin.getX(), origin.getY(), origin.getZ()));
              }
@@ -80,7 +80,7 @@ index fa24d236ed330b417306f137d441bb08dc79a3f5..5397d84d790c32d369b0726db1657134
              // Save entity's from mob spawner status
              if (spawnedViaMobSpawner) {
                  nbttagcompound.putBoolean("Paper.FromMobSpawner", true);
-@@ -2358,6 +2362,26 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
+@@ -2357,6 +2361,26 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
              }
  
              spawnedViaMobSpawner = nbt.getBoolean("Paper.FromMobSpawner"); // Restore entity's from mob spawner status

@@ -692,15 +692,15 @@ index d23226ccb0f6c25028f000ce31346cd0a8898e6a..bc84b892cae5fe7019a3ad481e9da799
 +    // Paper end
  }
 diff --git a/src/main/java/org/bukkit/entity/Mob.java b/src/main/java/org/bukkit/entity/Mob.java
-index 11b6d1aba7d1f6ae1f3c822193486f5a1478e105..709c8fc3dde786f45ff13d6ee6c405ffdc765282 100644
+index 1cbb115bf1fb918e51fa771afc7a28717f468cea..eca7a38cb7c08e0f19f9a31f5efde2a52381d336 100644
 --- a/src/main/java/org/bukkit/entity/Mob.java
 +++ b/src/main/java/org/bukkit/entity/Mob.java
-@@ -162,4 +162,38 @@ public interface Mob extends LivingEntity, Lootable {
-      */
-     @Nullable
-     public Sound getAmbientSound();
+@@ -171,4 +171,38 @@ public interface Mob extends LivingEntity, Lootable {
+         this.setSeed(seed);
+     }
+     // Paper end - LootTable API
 +
-+    // Paper start
++    // Paper start - Missing Entity API
 +    /**
 +     * Some mobs will raise their arm(s) when aggressive:
 +     * <ul>
@@ -732,7 +732,7 @@ index 11b6d1aba7d1f6ae1f3c822193486f5a1478e105..709c8fc3dde786f45ff13d6ee6c405ff
 +     * @see #isAggressive()
 +     */
 +    void setAggressive(boolean aggressive);
-+    // Paper end
++    // Paper end - Missing Entity API
  }
 diff --git a/src/main/java/org/bukkit/entity/MushroomCow.java b/src/main/java/org/bukkit/entity/MushroomCow.java
 index 939a3dbfcf38f38e4e39d28973ef723157ce0a50..e14194a130ebd872bbc1eb24c7759f0388f3da97 100644

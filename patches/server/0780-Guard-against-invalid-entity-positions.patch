@@ -6,10 +6,10 @@ Subject: [PATCH] Guard against invalid entity positions
 Anything not finite should be blocked and logged
 
 diff --git a/src/main/java/net/minecraft/world/entity/Entity.java b/src/main/java/net/minecraft/world/entity/Entity.java
-index 32d97353a5f030fa46ea637e546ef0856122b391..7179939c141d4c08e4d52ad8388625024dc8021c 100644
+index 9d214e4fa3590fa0515ecba324f5b321375cebda..366805740d07ba4109d81fb5d5ec08c9fad057ae 100644
 --- a/src/main/java/net/minecraft/world/entity/Entity.java
 +++ b/src/main/java/net/minecraft/world/entity/Entity.java
-@@ -4539,11 +4539,33 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
+@@ -4538,11 +4538,33 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
          return this.getZ((2.0D * this.random.nextDouble() - 1.0D) * widthScale);
      }
  

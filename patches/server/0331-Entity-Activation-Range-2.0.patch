@@ -112,10 +112,10 @@ index 86f2d1c6298a08968febf1bfd5073ac386c0a998..e147ec8eeb69668da8eb52550c39623f
          } else {
              passenger.stopRiding();
 diff --git a/src/main/java/net/minecraft/world/entity/Entity.java b/src/main/java/net/minecraft/world/entity/Entity.java
-index 5397d84d790c32d369b0726db16571348285d8fb..b65c8b48c3a3dd71cb5945dca104cc67a1f2ce6d 100644
+index dc70161b675a04885f0335d57071fc62c447029e..edd85f45b0344f9d24a180c3783e1f2755ef980f 100644
 --- a/src/main/java/net/minecraft/world/entity/Entity.java
 +++ b/src/main/java/net/minecraft/world/entity/Entity.java
-@@ -395,6 +395,8 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
+@@ -394,6 +394,8 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
      public void inactiveTick() { }
      // Spigot end
      // Paper start
@@ -124,7 +124,7 @@ index 5397d84d790c32d369b0726db16571348285d8fb..b65c8b48c3a3dd71cb5945dca104cc67
      protected int numCollisions = 0; // Paper
      public boolean spawnedViaMobSpawner; // Paper - Yes this name is similar to above, upstream took the better one
      @javax.annotation.Nullable
-@@ -967,6 +969,8 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
+@@ -966,6 +968,8 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
          } else {
              this.wasOnFire = this.isOnFire();
              if (movementType == MoverType.PISTON) {
@@ -133,7 +133,7 @@ index 5397d84d790c32d369b0726db16571348285d8fb..b65c8b48c3a3dd71cb5945dca104cc67
                  movement = this.limitPistonMovement(movement);
                  if (movement.equals(Vec3.ZERO)) {
                      return;
-@@ -979,6 +983,13 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
+@@ -978,6 +982,13 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
                  this.stuckSpeedMultiplier = Vec3.ZERO;
                  this.setDeltaMovement(Vec3.ZERO);
              }

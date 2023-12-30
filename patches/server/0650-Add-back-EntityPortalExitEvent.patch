@@ -5,10 +5,10 @@ Subject: [PATCH] Add back EntityPortalExitEvent
 
 
 diff --git a/src/main/java/net/minecraft/world/entity/Entity.java b/src/main/java/net/minecraft/world/entity/Entity.java
-index 6889b02637178db2caad58e5513847fb96e04ecb..6f023b22a1051baaa5310d8c5a1aa6d8b76d8992 100644
+index add3b51d10f01913f01db54bca76e3dbb2062a60..4d6f1e1ffd10624f8848b9dd7f613c3c206ea2ae 100644
 --- a/src/main/java/net/minecraft/world/entity/Entity.java
 +++ b/src/main/java/net/minecraft/world/entity/Entity.java
-@@ -3373,6 +3373,28 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
+@@ -3372,6 +3372,28 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
              } else {
                  // CraftBukkit start
                  worldserver = shapedetectorshape.world;
@@ -37,7 +37,7 @@ index 6889b02637178db2caad58e5513847fb96e04ecb..6f023b22a1051baaa5310d8c5a1aa6d8
                  if (worldserver == this.level) {
                      // SPIGOT-6782: Just move the entity if a plugin changed the world to the one the entity is already in
                      this.moveTo(shapedetectorshape.pos.x, shapedetectorshape.pos.y, shapedetectorshape.pos.z, shapedetectorshape.yRot, shapedetectorshape.xRot);
-@@ -3392,8 +3414,8 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
+@@ -3391,8 +3413,8 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
  
                  if (entity != null) {
                      entity.restoreFrom(this);

@@ -5,13 +5,15 @@ Subject: [PATCH] Left handed API
 
 
 diff --git a/src/main/java/org/bukkit/entity/Mob.java b/src/main/java/org/bukkit/entity/Mob.java
-index 709c8fc3dde786f45ff13d6ee6c405ffdc765282..0c511b64672f9bafb92be3aea6bab8c1c12a7041 100644
+index eca7a38cb7c08e0f19f9a31f5efde2a52381d336..09794c42537cbf7c4b0b28666d3df0b5342adae6 100644
 --- a/src/main/java/org/bukkit/entity/Mob.java
 +++ b/src/main/java/org/bukkit/entity/Mob.java
-@@ -196,4 +196,20 @@ public interface Mob extends LivingEntity, Lootable {
+@@ -205,4 +205,22 @@ public interface Mob extends LivingEntity, Lootable {
       */
      void setAggressive(boolean aggressive);
-     // Paper end
+     // Paper end - Missing Entity API
++
++    // Paper end - left-handed API
 +
 +    // Paper start
 +    /**
@@ -27,5 +29,5 @@ index 709c8fc3dde786f45ff13d6ee6c405ffdc765282..0c511b64672f9bafb92be3aea6bab8c1
 +      * @param leftHanded True if left-handed
 +      */
 +    public void setLeftHanded(boolean leftHanded);
-+    // Paper end
++    // Paper end - left-handed API
  }

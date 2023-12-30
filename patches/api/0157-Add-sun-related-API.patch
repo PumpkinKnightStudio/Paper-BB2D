@@ -5,7 +5,7 @@ Subject: [PATCH] Add sun related API
 
 
 diff --git a/src/main/java/org/bukkit/World.java b/src/main/java/org/bukkit/World.java
-index 99a31572fa393a2482548ec55a96cb8568d07199..561cfe701d76fa0c85cea4a76affa7e90de82da0 100644
+index 94277942f5779cfc8ad7ab5d27f43d891da1297c..313602704694c85bbac96b68deab67cd25f9913c 100644
 --- a/src/main/java/org/bukkit/World.java
 +++ b/src/main/java/org/bukkit/World.java
 @@ -1760,6 +1760,16 @@ public interface World extends RegionAccessor, WorldInfo, PluginMessageRecipient
@@ -26,10 +26,10 @@ index 99a31572fa393a2482548ec55a96cb8568d07199..561cfe701d76fa0c85cea4a76affa7e9
       * Gets the full in-game time on this world since the world generation
       *
 diff --git a/src/main/java/org/bukkit/entity/Mob.java b/src/main/java/org/bukkit/entity/Mob.java
-index 6de4344931b2e3d570346b800186c44a0d5782cc..7eee2e561346ac1d672f9652edb78e76c910fc9d 100644
+index af5158365e96e0934974836a4e2915dd9f161ac5..141479aae73666f1c1cb4ac95931c171fd8d4407 100644
 --- a/src/main/java/org/bukkit/entity/Mob.java
 +++ b/src/main/java/org/bukkit/entity/Mob.java
-@@ -20,6 +20,13 @@ public interface Mob extends LivingEntity, Lootable {
+@@ -21,6 +21,13 @@ public interface Mob extends LivingEntity, Lootable {
       */
      @NotNull
      com.destroystokyo.paper.entity.Pathfinder getPathfinder();

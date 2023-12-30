@@ -5,10 +5,10 @@ Subject: [PATCH] Collision option for requiring a player participant
 
 
 diff --git a/src/main/java/net/minecraft/world/entity/Entity.java b/src/main/java/net/minecraft/world/entity/Entity.java
-index a0c70b204007a906076d3a1f28c84521ad4471c4..3b2c100c678dab10f72483769fba6cbf3371d377 100644
+index 37f0417533ae6ba8468f10124794b7084db27ad5..6a544ebbcf79b8316ac8a4176347307e66df2754 100644
 --- a/src/main/java/net/minecraft/world/entity/Entity.java
 +++ b/src/main/java/net/minecraft/world/entity/Entity.java
-@@ -1932,6 +1932,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
+@@ -1931,6 +1931,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
      public void push(Entity entity) {
          if (!this.isPassengerOfSameVehicle(entity)) {
              if (!entity.noPhysics && !this.noPhysics) {

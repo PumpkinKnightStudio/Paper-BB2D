@@ -11,10 +11,10 @@ Move the tick logic into the post tick, where portaling was
 designed to happen in the first place.
 
 diff --git a/src/main/java/net/minecraft/world/entity/Entity.java b/src/main/java/net/minecraft/world/entity/Entity.java
-index 3b2c100c678dab10f72483769fba6cbf3371d377..229ed03a59c77d37242b44edabc2ddb843037fa6 100644
+index 6a544ebbcf79b8316ac8a4176347307e66df2754..af7d09d491a4af6b8ad4d43a5407b1c9027641d7 100644
 --- a/src/main/java/net/minecraft/world/entity/Entity.java
 +++ b/src/main/java/net/minecraft/world/entity/Entity.java
-@@ -490,6 +490,36 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
+@@ -489,6 +489,36 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
      // Paper end
      // Paper start - optimise entity tracking
      final org.spigotmc.TrackingRange.TrackingRangeType trackingRangeType = org.spigotmc.TrackingRange.getTrackingRangeType(this);
@@ -51,7 +51,7 @@ index 3b2c100c678dab10f72483769fba6cbf3371d377..229ed03a59c77d37242b44edabc2ddb8
  
      public boolean isLegacyTrackingEntity = false;
  
-@@ -2879,6 +2909,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
+@@ -2878,6 +2908,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
              }
  
              this.processPortalCooldown();

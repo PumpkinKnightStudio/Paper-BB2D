@@ -5,10 +5,10 @@ Subject: [PATCH] Don't load chunks for supporting block checks
 
 
 diff --git a/src/main/java/net/minecraft/world/entity/Entity.java b/src/main/java/net/minecraft/world/entity/Entity.java
-index 96cfc5323cf080540c934c54ac00488e5babcea5..903fa8c1489541e141bef59239ecd645955ffca4 100644
+index 7033634b90555404fd25dc5ca5d6da4353001e54..344080cca3a854c80f12409e22273fa52fbaac2c 100644
 --- a/src/main/java/net/minecraft/world/entity/Entity.java
 +++ b/src/main/java/net/minecraft/world/entity/Entity.java
-@@ -1360,7 +1360,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
+@@ -1359,7 +1359,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
      }
  
      protected BlockPos getOnPos(float offset) {

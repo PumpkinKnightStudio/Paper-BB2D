@@ -358,10 +358,10 @@ index b688b3856cb3068a539fcecfbfa113f8ab4160a9..c275b881cbd11307a6dcc7190d7a7d40
       * @return whether the item frame is visible or not
       */
 diff --git a/src/main/java/org/bukkit/entity/Mob.java b/src/main/java/org/bukkit/entity/Mob.java
-index 2926fa6071bc7640cc10280b5c3962b0ce7686f1..4f63988848443aff55619bc12ef12c925642a3f9 100644
+index b971dd54d4b200295f1cd014c0acbc868dcdf7c7..6aac95b8ed7b1eb44cfc1f6003bbabcbe23a8c44 100644
 --- a/src/main/java/org/bukkit/entity/Mob.java
 +++ b/src/main/java/org/bukkit/entity/Mob.java
-@@ -9,6 +9,10 @@ import org.jetbrains.annotations.Nullable;
+@@ -10,6 +10,10 @@ import org.jetbrains.annotations.Nullable;
   */
  public interface Mob extends LivingEntity, Lootable {
  
