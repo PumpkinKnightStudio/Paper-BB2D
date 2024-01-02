@@ -6,10 +6,10 @@ Subject: [PATCH] Expose pre-collision moving velocity to
 
 
 diff --git a/src/main/java/net/minecraft/world/entity/Entity.java b/src/main/java/net/minecraft/world/entity/Entity.java
-index 7da95c2c02493c8a472488d7f8e6f63fbe807c8e..00c88798099c72f8682ac3547da96af6830567b4 100644
+index 3a049b0243f6ca7391c5908458ffa001cdd3bae1..88a0db2dbd16a9523344f6a546cfe2637b84131b 100644
 --- a/src/main/java/net/minecraft/world/entity/Entity.java
 +++ b/src/main/java/net/minecraft/world/entity/Entity.java
-@@ -1160,7 +1160,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
+@@ -1159,7 +1159,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
                      }
  
                      if (!bl.getType().isAir()) {

@@ -14,7 +14,7 @@ movement will load only the chunk the player enters anyways and avoids loading
 massive amounts of surrounding chunks due to large AABB lookups.
 
 diff --git a/src/main/java/net/minecraft/server/players/PlayerList.java b/src/main/java/net/minecraft/server/players/PlayerList.java
-index 68935845e9041706c2e203ff436f50d92c190a8f..d4734253bb5f45b62a31aa5c260a414ce9979736 100644
+index 77109036dccabe1af443956aa94123ec240b23ac..13fcc14905ade93494aa67fc53c952db7abcc7f7 100644
 --- a/src/main/java/net/minecraft/server/players/PlayerList.java
 +++ b/src/main/java/net/minecraft/server/players/PlayerList.java
 @@ -822,6 +822,7 @@ public abstract class PlayerList {
@@ -26,13 +26,13 @@ index 68935845e9041706c2e203ff436f50d92c190a8f..d4734253bb5f45b62a31aa5c260a414c
              // CraftBukkit end
              entityplayer1.setPos(entityplayer1.getX(), entityplayer1.getY() + 1.0D, entityplayer1.getZ());
 diff --git a/src/main/java/net/minecraft/world/entity/Entity.java b/src/main/java/net/minecraft/world/entity/Entity.java
-index 32558b5acfbc13f969d6d5c4e9a61d0beca6c41b..2e45aef27d9a9f224779357c649df796ddc16b8e 100644
+index d273655c9ec7eb5777da0a7c7de04c8c4d8e5ff4..535da60f79f3698d569fc33da6c8c79a3e8b445b 100644
 --- a/src/main/java/net/minecraft/world/entity/Entity.java
 +++ b/src/main/java/net/minecraft/world/entity/Entity.java
-@@ -238,6 +238,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
+@@ -237,6 +237,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
+     // Paper end
      public org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason spawnReason; // Paper
  
-     public com.destroystokyo.paper.loottable.PaperLootableInventoryData lootableData; // Paper
 +    public boolean collisionLoadChunks = false; // Paper
      private CraftEntity bukkitEntity;
  

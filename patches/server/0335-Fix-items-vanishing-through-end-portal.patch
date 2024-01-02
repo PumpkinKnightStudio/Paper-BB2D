@@ -13,10 +13,10 @@ Quickly loading the exact world spawn chunk before searching the
 heightmap resolves the issue without having to load all spawn chunks.
 
 diff --git a/src/main/java/net/minecraft/world/entity/Entity.java b/src/main/java/net/minecraft/world/entity/Entity.java
-index b65c8b48c3a3dd71cb5945dca104cc67a1f2ce6d..cf3742d3d771f6e0c71917bafda7027bd69b1aff 100644
+index edd85f45b0344f9d24a180c3783e1f2755ef980f..61a2a05a1ca364fdb8d42608b0ac67933267328a 100644
 --- a/src/main/java/net/minecraft/world/entity/Entity.java
 +++ b/src/main/java/net/minecraft/world/entity/Entity.java
-@@ -3411,6 +3411,9 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
+@@ -3410,6 +3410,9 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
              if (flag1) {
                  blockposition1 = ServerLevel.END_SPAWN_POINT;
              } else {

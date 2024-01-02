@@ -2179,7 +2179,7 @@ index d0a8092bf57a29ab7c00ec0ddf52a9fdb2a33267..392406722b0a040c1d41fdc1154d75d3
      private Direction(int id, int idOpposite, int idHorizontal, String name, Direction.AxisDirection direction, Direction.Axis axis, Vec3i vector) {
          this.data3d = id;
 diff --git a/src/main/java/net/minecraft/server/level/ServerPlayer.java b/src/main/java/net/minecraft/server/level/ServerPlayer.java
-index 45f2a81cd59434956cc33e489af6032e6ef9947d..29da0b80aa0a4e6ebf1f0e30c26a6b85f034e8e4 100644
+index 60164d8ff63bf536ddf46605a9dc7931ebc5b82a..7c8f5ae6bd83bd08403738dcd364b0af06fb1a9b 100644
 --- a/src/main/java/net/minecraft/server/level/ServerPlayer.java
 +++ b/src/main/java/net/minecraft/server/level/ServerPlayer.java
 @@ -469,7 +469,7 @@ public class ServerPlayer extends Player {
@@ -2201,7 +2201,7 @@ index 45f2a81cd59434956cc33e489af6032e6ef9947d..29da0b80aa0a4e6ebf1f0e30c26a6b85
              }
          }
 diff --git a/src/main/java/net/minecraft/server/players/PlayerList.java b/src/main/java/net/minecraft/server/players/PlayerList.java
-index 53dbfb828f4d6f47b87e7ff6829a8dbc3de2f0fd..30ad9f878d0b76c6bef594448c3122d614a7aa8c 100644
+index 159932e2807c8d51fbf141c2145a138a39ea8abe..41a5d509a398972db910d32babb70e9bd5fa41da 100644
 --- a/src/main/java/net/minecraft/server/players/PlayerList.java
 +++ b/src/main/java/net/minecraft/server/players/PlayerList.java
 @@ -911,7 +911,7 @@ public abstract class PlayerList {
@@ -2214,10 +2214,10 @@ index 53dbfb828f4d6f47b87e7ff6829a8dbc3de2f0fd..30ad9f878d0b76c6bef594448c3122d6
              entityplayer1.setPos(entityplayer1.getX(), entityplayer1.getY() + 1.0D, entityplayer1.getZ());
          }
 diff --git a/src/main/java/net/minecraft/world/entity/Entity.java b/src/main/java/net/minecraft/world/entity/Entity.java
-index 09a49aa1f33796ab5947010538f504c49d2af226..5a6536bf3503ba27df8bdd810b76266aee42e037 100644
+index 5cdda51b92eb469766d12e29ce7c761f6e4c387e..02ae71ea13c64c647cbbdca1d8040ff4c6055f03 100644
 --- a/src/main/java/net/minecraft/world/entity/Entity.java
 +++ b/src/main/java/net/minecraft/world/entity/Entity.java
-@@ -1215,9 +1215,44 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
+@@ -1214,9 +1214,44 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
                  float f = this.getBlockSpeedFactor();
  
                  this.setDeltaMovement(this.getDeltaMovement().multiply((double) f, 1.0D, (double) f));
@@ -2265,7 +2265,7 @@ index 09a49aa1f33796ab5947010538f504c49d2af226..5a6536bf3503ba27df8bdd810b76266a
                      if (this.remainingFireTicks <= 0) {
                          this.setRemainingFireTicks(-this.getFireImmuneTicks());
                      }
-@@ -1397,32 +1432,82 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
+@@ -1396,32 +1431,82 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
      }
  
      private Vec3 collide(Vec3 movement) {
@@ -2364,7 +2364,7 @@ index 09a49aa1f33796ab5947010538f504c49d2af226..5a6536bf3503ba27df8bdd810b76266a
      }
  
      public static Vec3 collideBoundingBox(@Nullable Entity entity, Vec3 movement, AABB entityBoundingBox, Level world, List<VoxelShape> collisions) {
-@@ -2627,11 +2712,70 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
+@@ -2626,11 +2711,70 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
              float f = this.dimensions.width * 0.8F;
              AABB axisalignedbb = AABB.ofSize(this.getEyePosition(), (double) f, 1.0E-6D, (double) f);
  
@@ -2600,7 +2600,7 @@ index a25497eec004add7408a63b1a0f09e3fa443b324..9f892de55ab03367daed4c30cc44c9dd
  
      // Paper start
 diff --git a/src/main/java/net/minecraft/world/level/Level.java b/src/main/java/net/minecraft/world/level/Level.java
-index 0bf3bfd0a44fe7219e6ed451eb85c25e87a31aac..3dfc42dfed0429ea46238ede127b86a0c7756659 100644
+index c438c75b8edfbb8d728b01a96882e6cd802a3bea..b4c4e90994f8872c2f648389c7de0dd31a874085 100644
 --- a/src/main/java/net/minecraft/world/level/Level.java
 +++ b/src/main/java/net/minecraft/world/level/Level.java
 @@ -300,6 +300,10 @@ public abstract class Level implements LevelAccessor, AutoCloseable {

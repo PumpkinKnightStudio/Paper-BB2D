@@ -5,10 +5,10 @@ Subject: [PATCH] Optimize indirect passenger iteration
 
 
 diff --git a/src/main/java/net/minecraft/world/entity/Entity.java b/src/main/java/net/minecraft/world/entity/Entity.java
-index 229ed03a59c77d37242b44edabc2ddb843037fa6..6889b02637178db2caad58e5513847fb96e04ecb 100644
+index af7d09d491a4af6b8ad4d43a5407b1c9027641d7..add3b51d10f01913f01db54bca76e3dbb2062a60 100644
 --- a/src/main/java/net/minecraft/world/entity/Entity.java
 +++ b/src/main/java/net/minecraft/world/entity/Entity.java
-@@ -3926,20 +3926,34 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
+@@ -3925,20 +3925,34 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
      }
  
      private Stream<Entity> getIndirectPassengersStream() {
@@ -43,7 +43,7 @@ index 229ed03a59c77d37242b44edabc2ddb843037fa6..6889b02637178db2caad58e5513847fb
          return () -> {
              return this.getIndirectPassengersStream().iterator();
          };
-@@ -3962,6 +3976,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
+@@ -3961,6 +3975,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
      // Paper end - rewrite chunk system
  
      public boolean hasExactlyOnePlayerPassenger() {

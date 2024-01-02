@@ -21,10 +21,10 @@ index 08a84f66478d765080367a1c1acd77908ce605a8..7a09fde1a6fbd460548b43ff52301c51
 +    // Paper end - More Lidded Block API
  }
 diff --git a/src/main/java/org/bukkit/craftbukkit/block/CraftChest.java b/src/main/java/org/bukkit/craftbukkit/block/CraftChest.java
-index b742d9d231bf79ed53d3fe4deaa81e64c6801c4c..b5d9e750965b21c27ec4aa12b0997176adbad527 100644
+index 58bd3c4b328b5e792c9ed8dfcdfa0f5ddcc83092..e743224a12b76c462e5c588831f32a8f86866343 100644
 --- a/src/main/java/org/bukkit/craftbukkit/block/CraftChest.java
 +++ b/src/main/java/org/bukkit/craftbukkit/block/CraftChest.java
-@@ -87,4 +87,11 @@ public class CraftChest extends CraftLootable<ChestBlockEntity> implements Chest
+@@ -86,4 +86,11 @@ public class CraftChest extends CraftLootable<ChestBlockEntity> implements Chest
      public CraftChest copy() {
          return new CraftChest(this);
      }

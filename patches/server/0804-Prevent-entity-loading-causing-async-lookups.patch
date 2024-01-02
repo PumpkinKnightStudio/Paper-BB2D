@@ -5,10 +5,10 @@ Subject: [PATCH] Prevent entity loading causing async lookups
 
 
 diff --git a/src/main/java/net/minecraft/world/entity/Entity.java b/src/main/java/net/minecraft/world/entity/Entity.java
-index 7179939c141d4c08e4d52ad8388625024dc8021c..4c4c23df45a951a3d34b801463957b2cf589161a 100644
+index 366805740d07ba4109d81fb5d5ec08c9fad057ae..d0abb1487271e7672d90346d52f2ea2107912c82 100644
 --- a/src/main/java/net/minecraft/world/entity/Entity.java
 +++ b/src/main/java/net/minecraft/world/entity/Entity.java
-@@ -801,6 +801,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
+@@ -800,6 +800,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
  
      public void baseTick() {
          this.level().getProfiler().push("entityBaseTick");

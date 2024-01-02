@@ -5,10 +5,10 @@ Subject: [PATCH] Forward CraftEntity in teleport command
 
 
 diff --git a/src/main/java/net/minecraft/world/entity/Entity.java b/src/main/java/net/minecraft/world/entity/Entity.java
-index 5a6536bf3503ba27df8bdd810b76266aee42e037..72badd1d14107a665f8730c9dc0aba91a1950caf 100644
+index 02ae71ea13c64c647cbbdca1d8040ff4c6055f03..ea28ebd3673dd859800942e112f52f1bf3ca2c05 100644
 --- a/src/main/java/net/minecraft/world/entity/Entity.java
 +++ b/src/main/java/net/minecraft/world/entity/Entity.java
-@@ -3531,6 +3531,13 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
+@@ -3530,6 +3530,13 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
      }
  
      public void restoreFrom(Entity original) {
@@ -22,7 +22,7 @@ index 5a6536bf3503ba27df8bdd810b76266aee42e037..72badd1d14107a665f8730c9dc0aba91
          CompoundTag nbttagcompound = original.saveWithoutId(new CompoundTag());
  
          nbttagcompound.remove("Dimension");
-@@ -3621,10 +3628,10 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
+@@ -3620,10 +3627,10 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
                          }
                      }
                      // CraftBukkit end

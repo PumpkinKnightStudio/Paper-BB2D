@@ -8,10 +8,10 @@ This is because bukkit uses a separate head rotation field for yaw.
 This issue only applies to players.
 
 diff --git a/src/main/java/net/minecraft/world/entity/Entity.java b/src/main/java/net/minecraft/world/entity/Entity.java
-index 1aac748a6ac485ad66f4501ae22cd6a422a966b5..4be223f2aa5ecf259e7d6551c8ca8876fb343f59 100644
+index f025e340cd4fe6d9bc36c78200587d79d4e65267..61d66fc4e1159c5dea2d25ddce0a5525a2fc068c 100644
 --- a/src/main/java/net/minecraft/world/entity/Entity.java
 +++ b/src/main/java/net/minecraft/world/entity/Entity.java
-@@ -1916,6 +1916,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
+@@ -1915,6 +1915,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
          this.setXRot(Mth.clamp(pitch, -90.0F, 90.0F) % 360.0F);
          this.yRotO = this.getYRot();
          this.xRotO = this.getXRot();
@@ -19,7 +19,7 @@ index 1aac748a6ac485ad66f4501ae22cd6a422a966b5..4be223f2aa5ecf259e7d6551c8ca8876
      }
  
      public void absMoveTo(double x, double y, double z) {
-@@ -1954,6 +1955,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
+@@ -1953,6 +1954,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
          this.setXRot(pitch);
          this.setOldPosAndRot();
          this.reapplyPosition();

@@ -6,10 +6,10 @@ Subject: [PATCH] Expose the Entity Counter to allow plugins to use valid and
 
 
 diff --git a/src/main/java/net/minecraft/world/entity/Entity.java b/src/main/java/net/minecraft/world/entity/Entity.java
-index 452789dc47393580374bf438e6229b1e6cd3832b..e3275f09f48c9e69179fd17901d4294ddb68a435 100644
+index 2f2f3e1fcc6f70b0e4eb5836897d3a2e63439b58..2553ed1068f3fbfdf9dccdf7f1b5c5b18e8d575c 100644
 --- a/src/main/java/net/minecraft/world/entity/Entity.java
 +++ b/src/main/java/net/minecraft/world/entity/Entity.java
-@@ -4493,4 +4493,10 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
+@@ -4492,4 +4492,10 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
  
          void accept(Entity entity, double x, double y, double z);
      }

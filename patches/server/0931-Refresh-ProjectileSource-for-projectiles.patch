@@ -14,10 +14,10 @@ clearing the owner.
 Co-authored-by: Warrior <50800980+Warriorrrr@users.noreply.github.com>
 
 diff --git a/src/main/java/net/minecraft/world/entity/Entity.java b/src/main/java/net/minecraft/world/entity/Entity.java
-index 00c88798099c72f8682ac3547da96af6830567b4..96cfc5323cf080540c934c54ac00488e5babcea5 100644
+index 88a0db2dbd16a9523344f6a546cfe2637b84131b..7033634b90555404fd25dc5ca5d6da4353001e54 100644
 --- a/src/main/java/net/minecraft/world/entity/Entity.java
 +++ b/src/main/java/net/minecraft/world/entity/Entity.java
-@@ -384,6 +384,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
+@@ -383,6 +383,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
      public boolean inWorld = false;
      public boolean generation;
      public int maxAirTicks = this.getDefaultMaxAirSupply(); // CraftBukkit - SPIGOT-6907: re-implement LivingEntity#setMaximumAir()

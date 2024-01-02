@@ -122,10 +122,10 @@ index 5e5b840301bf7021ce2776f49732f608330894eb..681faafdeb4b7d7d8b2078fbc0fc6067
  
      private void tickPassenger(Entity vehicle, Entity passenger) {
 diff --git a/src/main/java/net/minecraft/world/entity/Entity.java b/src/main/java/net/minecraft/world/entity/Entity.java
-index 65ab99c3f3f1478db6e14d713e82346d3ecc06a5..1aac748a6ac485ad66f4501ae22cd6a422a966b5 100644
+index 5c300d41499d868e24f5f54c89afcd283216e14b..f025e340cd4fe6d9bc36c78200587d79d4e65267 100644
 --- a/src/main/java/net/minecraft/world/entity/Entity.java
 +++ b/src/main/java/net/minecraft/world/entity/Entity.java
-@@ -1029,7 +1029,42 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
+@@ -1028,7 +1028,42 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
          return this.onGround;
      }
  
@@ -168,7 +168,7 @@ index 65ab99c3f3f1478db6e14d713e82346d3ecc06a5..1aac748a6ac485ad66f4501ae22cd6a4
          if (this.noPhysics) {
              this.setPos(this.getX() + movement.x, this.getY() + movement.y, this.getZ() + movement.z);
          } else {
-@@ -1199,6 +1234,13 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
+@@ -1198,6 +1233,13 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
                  this.level().getProfiler().pop();
              }
          }
@@ -182,7 +182,7 @@ index 65ab99c3f3f1478db6e14d713e82346d3ecc06a5..1aac748a6ac485ad66f4501ae22cd6a4
      }
  
      private boolean isStateClimbable(BlockState state) {
-@@ -4272,7 +4314,9 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
+@@ -4271,7 +4313,9 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
      }
  
      public void setDeltaMovement(Vec3 velocity) {
@@ -192,7 +192,7 @@ index 65ab99c3f3f1478db6e14d713e82346d3ecc06a5..1aac748a6ac485ad66f4501ae22cd6a4
      }
  
      public void addDeltaMovement(Vec3 velocity) {
-@@ -4358,7 +4402,9 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
+@@ -4357,7 +4401,9 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
          }
          // Paper end - fix MC-4
          if (this.position.x != x || this.position.y != y || this.position.z != z) {

@@ -5,10 +5,10 @@ Subject: [PATCH] don't attempt to teleport dead entities
 
 
 diff --git a/src/main/java/net/minecraft/world/entity/Entity.java b/src/main/java/net/minecraft/world/entity/Entity.java
-index 4be223f2aa5ecf259e7d6551c8ca8876fb343f59..09a49aa1f33796ab5947010538f504c49d2af226 100644
+index 61d66fc4e1159c5dea2d25ddce0a5525a2fc068c..5cdda51b92eb469766d12e29ce7c761f6e4c387e 100644
 --- a/src/main/java/net/minecraft/world/entity/Entity.java
 +++ b/src/main/java/net/minecraft/world/entity/Entity.java
-@@ -792,7 +792,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
+@@ -791,7 +791,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
      // CraftBukkit start
      public void postTick() {
          // No clean way to break out of ticking once the entity has been copied to a new world, so instead we move the portalling later in the tick cycle

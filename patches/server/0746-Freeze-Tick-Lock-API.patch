@@ -5,10 +5,10 @@ Subject: [PATCH] Freeze Tick Lock API
 
 
 diff --git a/src/main/java/net/minecraft/world/entity/Entity.java b/src/main/java/net/minecraft/world/entity/Entity.java
-index 72badd1d14107a665f8730c9dc0aba91a1950caf..225ad411a48c156bcd1973f97349db80b0ff6a92 100644
+index ea28ebd3673dd859800942e112f52f1bf3ca2c05..f9ffd7aa485d1c69fd5793d30c2f9d600807a9b0 100644
 --- a/src/main/java/net/minecraft/world/entity/Entity.java
 +++ b/src/main/java/net/minecraft/world/entity/Entity.java
-@@ -407,6 +407,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
+@@ -406,6 +406,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
      private org.bukkit.util.Vector origin;
      @javax.annotation.Nullable
      private UUID originWorld;
@@ -16,7 +16,7 @@ index 72badd1d14107a665f8730c9dc0aba91a1950caf..225ad411a48c156bcd1973f97349db80
  
      public void setOrigin(@javax.annotation.Nonnull Location location) {
          this.origin = location.toVector();
-@@ -838,7 +839,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
+@@ -837,7 +838,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
                  this.setRemainingFireTicks(this.remainingFireTicks - 1);
              }
  
@@ -25,7 +25,7 @@ index 72badd1d14107a665f8730c9dc0aba91a1950caf..225ad411a48c156bcd1973f97349db80
                  this.setTicksFrozen(0);
                  this.level().levelEvent((Player) null, 1009, this.blockPosition, 1);
              }
-@@ -2452,6 +2453,9 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
+@@ -2451,6 +2452,9 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
              if (fromNetherPortal) {
                  nbttagcompound.putBoolean("Paper.FromNetherPortal", true);
              }
@@ -35,7 +35,7 @@ index 72badd1d14107a665f8730c9dc0aba91a1950caf..225ad411a48c156bcd1973f97349db80
              // Paper end
              return nbttagcompound;
          } catch (Throwable throwable) {
-@@ -2596,6 +2600,9 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
+@@ -2595,6 +2599,9 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
              if (spawnReason == null) {
                  spawnReason = org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.DEFAULT;
              }

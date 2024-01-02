@@ -5,10 +5,10 @@ Subject: [PATCH] Add option to nerf pigmen from nether portals
 
 
 diff --git a/src/main/java/net/minecraft/world/entity/Entity.java b/src/main/java/net/minecraft/world/entity/Entity.java
-index cf3742d3d771f6e0c71917bafda7027bd69b1aff..32558b5acfbc13f969d6d5c4e9a61d0beca6c41b 100644
+index 61a2a05a1ca364fdb8d42608b0ac67933267328a..d273655c9ec7eb5777da0a7c7de04c8c4d8e5ff4 100644
 --- a/src/main/java/net/minecraft/world/entity/Entity.java
 +++ b/src/main/java/net/minecraft/world/entity/Entity.java
-@@ -397,6 +397,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
+@@ -396,6 +396,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
      // Paper start
      public long activatedImmunityTick = Integer.MIN_VALUE; // Paper
      public boolean isTemporarilyActive = false; // Paper
@@ -16,7 +16,7 @@ index cf3742d3d771f6e0c71917bafda7027bd69b1aff..32558b5acfbc13f969d6d5c4e9a61d0b
      protected int numCollisions = 0; // Paper
      public boolean spawnedViaMobSpawner; // Paper - Yes this name is similar to above, upstream took the better one
      @javax.annotation.Nullable
-@@ -2231,6 +2232,9 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
+@@ -2230,6 +2231,9 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
              if (spawnedViaMobSpawner) {
                  nbttagcompound.putBoolean("Paper.FromMobSpawner", true);
              }
@@ -26,7 +26,7 @@ index cf3742d3d771f6e0c71917bafda7027bd69b1aff..32558b5acfbc13f969d6d5c4e9a61d0b
              // Paper end
              return nbttagcompound;
          } catch (Throwable throwable) {
-@@ -2373,6 +2377,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
+@@ -2372,6 +2376,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
              }
  
              spawnedViaMobSpawner = nbt.getBoolean("Paper.FromMobSpawner"); // Restore entity's from mob spawner status
