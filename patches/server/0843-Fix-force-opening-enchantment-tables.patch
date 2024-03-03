@@ -12,7 +12,7 @@ index 2abbcbd393660de69fec567c3e31dbc774d93920..10fad0ba0624fdb601de9cfb9dc82590
  
          // If there isn't an enchant table we can force create one, won't be very useful though.
          BlockPos pos = CraftLocation.toBlockPosition(location);
--        this.getHandle().openMenu(((EnchantmentTableBlock) Blocks.ENCHANTING_TABLE).getMenuProvider(null, this.getHandle().level(), pos));
+-        this.getHandle().openMenu(overrideTitle(((EnchantmentTableBlock) Blocks.ENCHANTING_TABLE).getMenuProvider(null, this.getHandle().level(), pos), title)); // Paper - overridable title
 +        // Paper start
 +        MenuProvider menuProvider = ((EnchantmentTableBlock) Blocks.ENCHANTING_TABLE).getMenuProvider(null, this.getHandle().level(), pos);
 +        if (menuProvider == null) {
@@ -23,7 +23,7 @@ index 2abbcbd393660de69fec567c3e31dbc774d93920..10fad0ba0624fdb601de9cfb9dc82590
 +                return new net.minecraft.world.inventory.EnchantmentMenu(syncId, inventory, net.minecraft.world.inventory.ContainerLevelAccess.create(this.getHandle().level(), pos));
 +            }, Component.translatable("container.enchant"));
 +        }
-+        this.getHandle().openMenu(menuProvider);
++        this.getHandle().openMenu(overrideTitle(menuProvider, title)); // Paper - overridable title
 +        // Paper end
  
          if (force) {

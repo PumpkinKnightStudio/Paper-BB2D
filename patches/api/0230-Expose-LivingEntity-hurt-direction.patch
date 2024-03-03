@@ -5,10 +5,10 @@ Subject: [PATCH] Expose LivingEntity hurt direction
 
 
 diff --git a/src/main/java/org/bukkit/entity/HumanEntity.java b/src/main/java/org/bukkit/entity/HumanEntity.java
-index 94f2c3167f4ce7f5f2b4ecc067739c64af0a2508..4054d2c836342f0e4bcbd33adb13f50daea5086a 100644
+index 2638b4f480682ee8626c213f5ea050d2db7e4fc0..be37de43f44c1aaabd5dab9a58545aba242f14d0 100644
 --- a/src/main/java/org/bukkit/entity/HumanEntity.java
 +++ b/src/main/java/org/bukkit/entity/HumanEntity.java
-@@ -348,6 +348,16 @@ public interface HumanEntity extends LivingEntity, AnimalTamer, InventoryHolder
+@@ -533,6 +533,16 @@ public interface HumanEntity extends LivingEntity, AnimalTamer, InventoryHolder
       */
      public void setCooldown(@NotNull Material material, int ticks);
  

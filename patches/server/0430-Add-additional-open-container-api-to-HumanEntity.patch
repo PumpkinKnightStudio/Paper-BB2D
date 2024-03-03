@@ -3,76 +3,128 @@ From: JRoy <joshroy126@gmail.com>
 Date: Wed, 26 Aug 2020 02:12:31 -0400
 Subject: [PATCH] Add additional open container api to HumanEntity
 
+Expand existing methods to also allow for title overrides
+
+Co-authored-by: Lukas Planz <me@md5lukas.de>
 
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftHumanEntity.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftHumanEntity.java
 index fe050a077782fb023c49710eb2127250d5165484..93644aefd2e6c97eca2735812b2b7b4bd039cfb5 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftHumanEntity.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftHumanEntity.java
-@@ -461,6 +461,70 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
+@@ -348,7 +348,7 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
+     }
+ 
+     @Override
+-    public InventoryView openWorkbench(Location location, boolean force) {
++    public InventoryView openWorkbench(Location location, boolean force, net.kyori.adventure.text.Component title) { // Paper - overridable title
+         if (location == null) {
+             location = this.getLocation();
+         }
+@@ -358,7 +358,7 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
+                 return null;
+             }
+         }
+-        this.getHandle().openMenu(((CraftingTableBlock) Blocks.CRAFTING_TABLE).getMenuProvider(null, this.getHandle().level(), CraftLocation.toBlockPosition(location)));
++        this.getHandle().openMenu(overrideTitle(((CraftingTableBlock) Blocks.CRAFTING_TABLE).getMenuProvider(null, this.getHandle().level(), CraftLocation.toBlockPosition(location)), title)); // Paper - overridable title
+         if (force) {
+             this.getHandle().containerMenu.checkReachable = false;
+         }
+@@ -366,7 +366,7 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
+     }
+ 
+     @Override
+-    public InventoryView openEnchanting(Location location, boolean force) {
++    public InventoryView openEnchanting(Location location, boolean force, net.kyori.adventure.text.Component title) { // Paper - overridable title
+         if (location == null) {
+             location = this.getLocation();
+         }
+@@ -379,7 +379,7 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
+ 
+         // If there isn't an enchant table we can force create one, won't be very useful though.
+         BlockPos pos = CraftLocation.toBlockPosition(location);
+-        this.getHandle().openMenu(((EnchantmentTableBlock) Blocks.ENCHANTING_TABLE).getMenuProvider(null, this.getHandle().level(), pos));
++        this.getHandle().openMenu(overrideTitle(((EnchantmentTableBlock) Blocks.ENCHANTING_TABLE).getMenuProvider(null, this.getHandle().level(), pos), title)); // Paper - overridable title
+ 
+         if (force) {
+             this.getHandle().containerMenu.checkReachable = false;
+@@ -422,14 +422,14 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
+     }
+ 
+     @Override
+-    public InventoryView openMerchant(Villager villager, boolean force) {
++    public InventoryView openMerchant(Villager villager, boolean force, net.kyori.adventure.text.Component name) { // Paper - overridable title
+         Preconditions.checkNotNull(villager, "villager cannot be null");
+ 
+-        return this.openMerchant((Merchant) villager, force);
++        return this.openMerchant((Merchant) villager, force, name); // Paper - overridable title
+     }
+ 
+     @Override
+-    public InventoryView openMerchant(Merchant merchant, boolean force) {
++    public InventoryView openMerchant(Merchant merchant, boolean force, net.kyori.adventure.text.Component nameOverride) { // Paper - overridable title
+         Preconditions.checkNotNull(merchant, "merchant cannot be null");
+ 
+         if (!force && merchant.isTrading()) {
+@@ -456,11 +456,64 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
+         }
+ 
+         mcMerchant.setTradingPlayer(this.getHandle());
+-        mcMerchant.openTradingScreen(this.getHandle(), name, level);
++        mcMerchant.openTradingScreen(this.getHandle(), nameOverride == null ? name : io.papermc.paper.adventure.PaperAdventure.asVanilla(nameOverride), level); // Paper - overridable title
+ 
          return this.getHandle().containerMenu.getBukkitView();
      }
  
 +    // Paper start - Add additional containers
 +    @Override
-+    public InventoryView openAnvil(Location location, boolean force) {
-+        return this.openInventory(location, force, Material.ANVIL);
++    public InventoryView openAnvil(Location location, boolean force, net.kyori.adventure.text.Component title) {
++        return this.openInventory(location, force, Blocks.ANVIL, title);
 +    }
 +
 +    @Override
-+    public InventoryView openCartographyTable(Location location, boolean force) {
-+        return this.openInventory(location, force, Material.CARTOGRAPHY_TABLE);
++    public InventoryView openCartographyTable(Location location, boolean force, net.kyori.adventure.text.Component title) {
++        return this.openInventory(location, force, Blocks.CARTOGRAPHY_TABLE, title);
 +    }
 +
 +    @Override
-+    public InventoryView openGrindstone(Location location, boolean force) {
-+        return this.openInventory(location, force, Material.GRINDSTONE);
++    public InventoryView openGrindstone(Location location, boolean force, net.kyori.adventure.text.Component title) {
++        return this.openInventory(location, force, Blocks.GRINDSTONE, title);
 +    }
 +
 +    @Override
-+    public InventoryView openLoom(Location location, boolean force) {
-+        return this.openInventory(location, force, Material.LOOM);
++    public InventoryView openLoom(Location location, boolean force, net.kyori.adventure.text.Component title) {
++        return this.openInventory(location, force, Blocks.LOOM, title);
 +    }
 +
 +    @Override
-+    public InventoryView openSmithingTable(Location location, boolean force) {
-+        return this.openInventory(location, force, Material.SMITHING_TABLE);
++    public InventoryView openSmithingTable(Location location, boolean force, net.kyori.adventure.text.Component title) {
++        return this.openInventory(location, force, Blocks.SMITHING_TABLE, title);
 +    }
 +
 +    @Override
-+    public InventoryView openStonecutter(Location location, boolean force) {
-+        return this.openInventory(location, force, Material.STONECUTTER);
++    public InventoryView openStonecutter(Location location, boolean force, net.kyori.adventure.text.Component title) {
++        return this.openInventory(location, force, Blocks.STONECUTTER, title);
 +    }
 +
-+    private InventoryView openInventory(Location location, boolean force, Material material) {
-+        org.spigotmc.AsyncCatcher.catchOp("open" + material);
++    private InventoryView openInventory(Location location, boolean force, net.minecraft.world.level.block.Block block, net.kyori.adventure.text.Component title) {
++        org.spigotmc.AsyncCatcher.catchOp("open" + block);
 +        if (location == null) {
 +            location = this.getLocation();
 +        }
-+        if (!force) {
-+            Block block = location.getBlock();
-+            if (block.getType() != material) {
-+                return null;
-+            }
++        if (!force && block != ((org.bukkit.craftbukkit.block.CraftBlock) location.getBlock()).getNMS().getBlock()) {
++            return null;
 +        }
-+        net.minecraft.world.level.block.Block block;
-+        if (material == Material.ANVIL) {
-+            block = Blocks.ANVIL;
-+        } else if (material == Material.CARTOGRAPHY_TABLE) {
-+            block = Blocks.CARTOGRAPHY_TABLE;
-+        } else if (material == Material.GRINDSTONE) {
-+            block = Blocks.GRINDSTONE;
-+        } else if (material == Material.LOOM) {
-+            block = Blocks.LOOM;
-+        } else if (material == Material.SMITHING_TABLE) {
-+            block = Blocks.SMITHING_TABLE;
-+        } else if (material == Material.STONECUTTER) {
-+            block = Blocks.STONECUTTER;
-+        } else {
-+            throw new IllegalArgumentException("Unsupported inventory type: " + material);
-+        }
-+        this.getHandle().openMenu(block.getMenuProvider(null, this.getHandle().level(), new BlockPos(location.getBlockX(), location.getBlockY(), location.getBlockZ())));
++        this.getHandle().openMenu(overrideTitle(block.getMenuProvider(null, this.getHandle().level(), new BlockPos(location.getBlockX(), location.getBlockY(), location.getBlockZ())), title));
 +        this.getHandle().containerMenu.checkReachable = !force;
 +        return this.getHandle().containerMenu.getBukkitView();
++    }
++
++    private MenuProvider overrideTitle(MenuProvider original, net.kyori.adventure.text.Component titleOverride) {
++        if (original == null || titleOverride == null) {
++            return original;
++        } else {
++            return new net.minecraft.world.SimpleMenuProvider(original, io.papermc.paper.adventure.PaperAdventure.asVanilla(titleOverride));
++        }
 +    }
 +    // Paper end
 +
