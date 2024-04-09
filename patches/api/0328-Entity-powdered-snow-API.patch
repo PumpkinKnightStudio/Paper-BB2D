@@ -5,31 +5,32 @@ Subject: [PATCH] Entity powdered snow API
 
 
 diff --git a/src/main/java/org/bukkit/entity/Entity.java b/src/main/java/org/bukkit/entity/Entity.java
-index d4f84318265343242a9fca565e456c7a8c1d68f7..6db147a2330e8046c1bfb5ec2acd8dd30827d475 100644
+index 14e411af33f7366b9d77d071cf03b068321d30d3..8330bfa733990f3b46f905f0978085f847261d14 100644
 --- a/src/main/java/org/bukkit/entity/Entity.java
 +++ b/src/main/java/org/bukkit/entity/Entity.java
-@@ -958,5 +958,12 @@ public interface Entity extends Metadatable, CommandSender, Nameable, Persistent
-      * @return Whether the entity was successfully spawned.
+@@ -961,4 +961,13 @@ public interface Entity extends Metadatable, CommandSender, Nameable, Persistent
       */
-     public boolean spawnAt(@NotNull Location location, @NotNull org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason reason);
+     boolean spawnAt(@NotNull Location location, @NotNull org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason reason);
+     // Paper end - raw entity serialization API
 +
++    // Paper start - entity powdered snow API
 +    /**
 +     * Check if entity is inside powdered snow.
 +     *
 +     * @return true if in powdered snow.
 +     */
 +    boolean isInPowderedSnow();
-     // Paper end
++    // Paper end - entity powdered snow API
  }
 diff --git a/src/main/java/org/bukkit/entity/Skeleton.java b/src/main/java/org/bukkit/entity/Skeleton.java
-index 01d838a60d056bf4b4a8ef9d0ac18c6f91f412e6..c61eba5f400d146a8643542048904e353df94f4b 100644
+index 01d838a60d056bf4b4a8ef9d0ac18c6f91f412e6..7ba283af41c4889c40b8d3e6cb4184edd64dccaa 100644
 --- a/src/main/java/org/bukkit/entity/Skeleton.java
 +++ b/src/main/java/org/bukkit/entity/Skeleton.java
 @@ -41,6 +41,16 @@ public interface Skeleton extends AbstractSkeleton {
       */
      void setConversionTime(int time);
  
-+    // Paper start
++    // Paper start - entity powdered snow API
 +    /**
 +     * Gets the time the skeleton
 +     * has been inside powdered snow.
@@ -37,7 +38,7 @@ index 01d838a60d056bf4b4a8ef9d0ac18c6f91f412e6..c61eba5f400d146a8643542048904e35
 +     * @return time in ticks
 +     */
 +    int inPowderedSnowTime();
-+    // Paper end
++    // Paper end - entity powdered snow API
 +
      /**
       * A legacy enum that defines the different variances of skeleton-like
