@@ -18856,7 +18856,7 @@ index 9816913ad729fd39c173364b92e5db06a733bc55..a3881964bad0cab8f480eda634216d73
          return crashreportsystemdetails;
      }
 diff --git a/src/main/java/net/minecraft/server/level/ServerPlayer.java b/src/main/java/net/minecraft/server/level/ServerPlayer.java
-index ae5a2136a0e266d4c35190f5d33552994c842786..5657f1ecbadda96a79978f918393c0c9a58dca83 100644
+index bd6c60ebfc76d19313bf01048268f8ce7e6603c5..18356db5d998dccb9e645a9ee0bebc5cbbfa5f7a 100644
 --- a/src/main/java/net/minecraft/server/level/ServerPlayer.java
 +++ b/src/main/java/net/minecraft/server/level/ServerPlayer.java
 @@ -276,6 +276,50 @@ public class ServerPlayer extends Player {
@@ -19380,7 +19380,7 @@ index 640db9f71608310a64e09f1e3e677c01e6ccd98a..f2a7cb6ebed7a4b4019a09af2a025f62
                          if (flag1) {
                              ++this.converted;
 diff --git a/src/main/java/net/minecraft/world/entity/Entity.java b/src/main/java/net/minecraft/world/entity/Entity.java
-index 7c99742e01e894bcc7d89a8588b2f128cf9b765d..3f620c4b8415f09a8d4664481b2d41d421ee836e 100644
+index 620c5a8a3eb26abe456b4c3cdcfa366f1f58c35b..596bd868d1ffd8abab606328a72459032fe2624f 100644
 --- a/src/main/java/net/minecraft/world/entity/Entity.java
 +++ b/src/main/java/net/minecraft/world/entity/Entity.java
 @@ -480,6 +480,58 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
@@ -19442,7 +19442,7 @@ index 7c99742e01e894bcc7d89a8588b2f128cf9b765d..3f620c4b8415f09a8d4664481b2d41d4
      public Entity(EntityType<?> type, Level world) {
          this.id = Entity.ENTITY_COUNTER.incrementAndGet();
          this.passengers = ImmutableList.of();
-@@ -2580,11 +2632,11 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
+@@ -2571,11 +2623,11 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
          return InteractionResult.PASS;
      }
  
@@ -19456,7 +19456,7 @@ index 7c99742e01e894bcc7d89a8588b2f128cf9b765d..3f620c4b8415f09a8d4664481b2d41d4
          return false;
      }
  
-@@ -4009,6 +4061,13 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
+@@ -4000,6 +4052,13 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
          }).count();
      }
  
@@ -19470,7 +19470,7 @@ index 7c99742e01e894bcc7d89a8588b2f128cf9b765d..3f620c4b8415f09a8d4664481b2d41d4
      public boolean hasExactlyOnePlayerPassenger() {
          if (this.passengers.isEmpty()) { return false; } // Paper - Optimize indirect passenger iteration
          return this.countPlayerPassengers() == 1;
-@@ -4361,6 +4420,12 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
+@@ -4352,6 +4411,12 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
              return;
          }
          // Paper end - Block invalid positions and bounding box
@@ -19483,7 +19483,7 @@ index 7c99742e01e894bcc7d89a8588b2f128cf9b765d..3f620c4b8415f09a8d4664481b2d41d4
          // Paper start - Fix MC-4
          if (this instanceof ItemEntity) {
              if (io.papermc.paper.configuration.GlobalConfiguration.get().misc.fixEntityPositionDesync) {
-@@ -4490,6 +4555,13 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
+@@ -4481,6 +4546,13 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
  
      @Override
      public final void setRemoved(Entity.RemovalReason entity_removalreason, EntityRemoveEvent.Cause cause) {
@@ -19497,7 +19497,7 @@ index 7c99742e01e894bcc7d89a8588b2f128cf9b765d..3f620c4b8415f09a8d4664481b2d41d4
          CraftEventFactory.callEntityRemoveEvent(this, cause);
          // CraftBukkit end
          final boolean alreadyRemoved = this.removalReason != null; // Paper - Folia schedulers
-@@ -4501,7 +4573,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
+@@ -4492,7 +4564,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
              this.stopRiding();
          }
  
@@ -19506,7 +19506,7 @@ index 7c99742e01e894bcc7d89a8588b2f128cf9b765d..3f620c4b8415f09a8d4664481b2d41d4
          this.levelCallback.onRemove(entity_removalreason);
          // Paper start - Folia schedulers
          if (!(this instanceof ServerPlayer) && entity_removalreason != RemovalReason.CHANGED_DIMENSION && !alreadyRemoved) {
-@@ -4532,7 +4604,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
+@@ -4523,7 +4595,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource, S
  
      @Override
      public boolean shouldBeSaved() {
