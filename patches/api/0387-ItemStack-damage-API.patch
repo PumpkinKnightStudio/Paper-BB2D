@@ -66,10 +66,10 @@ index 41c5559058df9701e345f39d9d3c23e45b6d49c3..812ae3368f828b388d6fd05a94cd88f2
 +    // Paper end - ItemStack damage API
  }
 diff --git a/src/main/java/org/bukkit/inventory/ItemStack.java b/src/main/java/org/bukkit/inventory/ItemStack.java
-index f236f9bfa4d43dcbad5919abef3620fcd0696880..845037909658884167136955a02b99af0040fa9c 100644
+index 1af246a1149708d333874ba0eda33f9a6743c01b..5f8b7eb48561e9e81e03be3b09c47becc585513a 100644
 --- a/src/main/java/org/bukkit/inventory/ItemStack.java
 +++ b/src/main/java/org/bukkit/inventory/ItemStack.java
-@@ -982,5 +982,19 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
+@@ -1063,5 +1063,19 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      public boolean canRepair(@NotNull ItemStack toBeRepaired) {
          return Bukkit.getUnsafe().isValidRepairItemStack(toBeRepaired, this);
      }

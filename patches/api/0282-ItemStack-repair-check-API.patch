@@ -26,10 +26,10 @@ index 42e4983051062f2fd3b595487cf8093440b41bba..057f4db9cb6b686ab941ec5d3e6ca23d
       * Returns the server's protocol version.
       *
 diff --git a/src/main/java/org/bukkit/inventory/ItemStack.java b/src/main/java/org/bukkit/inventory/ItemStack.java
-index 569f67ee3f89d6af4fe1420cecc74811550b6507..78ea59c8f63b5a71ba092cf1783183bb5d0a3b79 100644
+index b9d60079bdb7ee0db19b03986ff11c0bdf54d068..752f4b23b9450a45c66cd0be9eca5c79c8379e87 100644
 --- a/src/main/java/org/bukkit/inventory/ItemStack.java
 +++ b/src/main/java/org/bukkit/inventory/ItemStack.java
-@@ -898,5 +898,27 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
+@@ -979,5 +979,27 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      public io.papermc.paper.inventory.ItemRarity getRarity() {
          return Bukkit.getUnsafe().getItemStackRarity(this);
      }
