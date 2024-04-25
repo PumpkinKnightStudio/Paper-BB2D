@@ -3,6 +3,7 @@ From: Nassim Jahnke <nassim@njahnke.dev>
 Date: Wed, 1 Dec 2021 12:36:25 +0100
 Subject: [PATCH] Prevent sending oversized item data in equipment and metadata
 
+Co-authored-by: Jake Potrebic <jake.m.potrebic@gmail.com>
 
 diff --git a/src/main/java/io/papermc/paper/util/DataSanitizationUtil.java b/src/main/java/io/papermc/paper/util/DataSanitizationUtil.java
 new file mode 100644
@@ -95,7 +96,7 @@ index 59c1c103545f04fd35e6932df64a9910a1d74cd7..a5736685c1caddbc39085b5a13c2c720
          buf.writeByte(255);
      }
 diff --git a/src/main/java/net/minecraft/network/protocol/game/ClientboundSetEquipmentPacket.java b/src/main/java/net/minecraft/network/protocol/game/ClientboundSetEquipmentPacket.java
-index e092a486c4041ab1cfe9e29c88d0d94528a6e9a6..b35a8605714eb0de084f2a1b303cbe4d534d189a 100644
+index e092a486c4041ab1cfe9e29c88d0d94528a6e9a6..981668cee3a237b540750d6bfeedba8f500b603e 100644
 --- a/src/main/java/net/minecraft/network/protocol/game/ClientboundSetEquipmentPacket.java
 +++ b/src/main/java/net/minecraft/network/protocol/game/ClientboundSetEquipmentPacket.java
 @@ -17,8 +17,14 @@ public class ClientboundSetEquipmentPacket implements Packet<ClientGamePacketLis
@@ -107,9 +108,9 @@ index e092a486c4041ab1cfe9e29c88d0d94528a6e9a6..b35a8605714eb0de084f2a1b303cbe4d
 +        // Paper start - data sanitization
 +        this(id, equipmentList, false);
 +    }
-+    private boolean santizize = false;
++    private boolean sanitize = false;
 +    public ClientboundSetEquipmentPacket(int id, List<Pair<EquipmentSlot, ItemStack>> equipmentList, boolean sanitize) {
-+        this.santizize = sanitize;
++        this.sanitize = sanitize;
 +        // Paper end - data sanitization
          this.entity = id;
          this.slots = equipmentList;
@@ -118,7 +119,7 @@ index e092a486c4041ab1cfe9e29c88d0d94528a6e9a6..b35a8605714eb0de084f2a1b303cbe4d
          buf.writeVarInt(this.entity);
          int i = this.slots.size();
  
-+        try { if (this.santizize) io.papermc.paper.util.DataSanitizationUtil.DATA_SANITIZATION.set(true); // Paper - data sanitization
++        try { if (this.sanitize) io.papermc.paper.util.DataSanitizationUtil.DATA_SANITIZATION.set(true); // Paper - data sanitization
          for (int j = 0; j < i; j++) {
              Pair<EquipmentSlot, ItemStack> pair = this.slots.get(j);
              EquipmentSlot equipmentSlot = pair.getFirst();
@@ -126,7 +127,7 @@ index e092a486c4041ab1cfe9e29c88d0d94528a6e9a6..b35a8605714eb0de084f2a1b303cbe4d
              buf.writeByte(bl ? k | -128 : k);
              ItemStack.OPTIONAL_STREAM_CODEC.encode(buf, pair.getSecond());
          }
-+        } finally { if (this.santizize) io.papermc.paper.util.DataSanitizationUtil.DATA_SANITIZATION.set(false); } // Paper - data sanitization
++        } finally { if (this.sanitize) io.papermc.paper.util.DataSanitizationUtil.DATA_SANITIZATION.set(false); } // Paper - data sanitization
      }
  
      @Override
