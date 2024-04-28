@@ -1400,10 +1400,10 @@ index 0000000000000000000000000000000000000000..990d1bb46e0f9719f4e9af928d80ac6f
 +}
 diff --git a/src/main/java/io/papermc/paper/configuration/WorldConfiguration.java b/src/main/java/io/papermc/paper/configuration/WorldConfiguration.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..b3a39a0b1f54d38207fa55485318e6ca257a57ab
+index 0000000000000000000000000000000000000000..24c74a2760cd5c9964a192381b0d18ea80173a8e
 --- /dev/null
 +++ b/src/main/java/io/papermc/paper/configuration/WorldConfiguration.java
-@@ -0,0 +1,550 @@
+@@ -0,0 +1,553 @@
 +package io.papermc.paper.configuration;
 +
 +import com.google.common.collect.HashBasedTable;
@@ -1587,12 +1587,15 @@ index 0000000000000000000000000000000000000000..b3a39a0b1f54d38207fa55485318e6ca
 +            @MergeMap
 +            public Reference2IntMap<MobCategory> spawnLimits = Util.make(new Reference2IntOpenHashMap<>(NaturalSpawner.SPAWNING_CATEGORIES.length), map -> Arrays.stream(NaturalSpawner.SPAWNING_CATEGORIES).forEach(mobCategory -> map.put(mobCategory, -1)));
 +            @MergeMap
-+            public Map<MobCategory, DespawnRange> despawnRanges = Arrays.stream(MobCategory.values()).collect(Collectors.toMap(Function.identity(), category -> new DespawnRange(category.getNoDespawnDistance(), category.getDespawnDistance())));
++            public Map<MobCategory, DespawnRange> despawnRanges = Arrays.stream(MobCategory.values()).collect(Collectors.toMap(Function.identity(), category -> new DespawnRange(category.getDespawnDistance(), category.getNoDespawnDistance())));
 +            @MergeMap
 +            public Reference2IntMap<MobCategory> ticksPerSpawn = Util.make(new Reference2IntOpenHashMap<>(NaturalSpawner.SPAWNING_CATEGORIES.length), map -> Arrays.stream(NaturalSpawner.SPAWNING_CATEGORIES).forEach(mobCategory -> map.put(mobCategory, -1)));
 +
 +            @ConfigSerializable
-+            public record DespawnRange(@Required int soft, @Required int hard) {
++            public record DespawnRange(@Required int xzLimit, @Required int yLimit, @Required int xzSoftLimit, @Required int ySoftLimit) {
++                public DespawnRange(int hard, int soft) {
++                    this(hard, hard, soft, soft);
++                }
 +            }
 +
 +            public WaterAnimalSpawnHeight wateranimalSpawnHeight;
