@@ -4,6 +4,51 @@ Date: Wed, 30 Mar 2016 19:36:20 -0400
 Subject: [PATCH] MC Dev fixes
 
 
+diff --git a/src/main/java/io/papermc/paper/configuration/PaperConfigurations.java b/src/main/java/io/papermc/paper/configuration/PaperConfigurations.java
+index d99489e0216b24d27a19c92a1ce0c10ae10d071f..f02ac4e01d2092e3f086215340cb27d25ccc447a 100644
+--- a/src/main/java/io/papermc/paper/configuration/PaperConfigurations.java
++++ b/src/main/java/io/papermc/paper/configuration/PaperConfigurations.java
+@@ -7,6 +7,7 @@ import io.leangen.geantyref.TypeToken;
+ import io.papermc.paper.configuration.legacy.RequiresSpigotInitialization;
+ import io.papermc.paper.configuration.mapping.InnerClassFieldDiscoverer;
+ import io.papermc.paper.configuration.serializer.ComponentSerializer;
++import io.papermc.paper.configuration.serializer.DespawnRangeSerializer;
+ import io.papermc.paper.configuration.serializer.EnumValueSerializer;
+ import io.papermc.paper.configuration.serializer.NbtPathSerializer;
+ import io.papermc.paper.configuration.serializer.PacketClassSerializer;
+@@ -168,6 +169,7 @@ public class PaperConfigurations extends Configurations<GlobalConfiguration, Wor
+             .register(MapSerializer.TYPE, new MapSerializer(false))
+             .register(new EnumValueSerializer())
+             .register(new ComponentSerializer())
++            .register(WorldConfiguration.Entities.Spawning.DespawnRange.class, new DespawnRangeSerializer())
+         );
+     }
+ 
+diff --git a/src/main/java/io/papermc/paper/configuration/WorldConfiguration.java b/src/main/java/io/papermc/paper/configuration/WorldConfiguration.java
+index b3a39a0b1f54d38207fa55485318e6ca257a57ab..295f1e8d94562b7b4ade168823d15a4074b218de 100644
+--- a/src/main/java/io/papermc/paper/configuration/WorldConfiguration.java
++++ b/src/main/java/io/papermc/paper/configuration/WorldConfiguration.java
+@@ -181,14 +181,17 @@ public class WorldConfiguration extends ConfigurationPart {
+             @MergeMap
+             public Reference2IntMap<MobCategory> spawnLimits = Util.make(new Reference2IntOpenHashMap<>(NaturalSpawner.SPAWNING_CATEGORIES.length), map -> Arrays.stream(NaturalSpawner.SPAWNING_CATEGORIES).forEach(mobCategory -> map.put(mobCategory, -1)));
+             @MergeMap
+-            public Map<MobCategory, DespawnRange> despawnRanges = Arrays.stream(MobCategory.values()).collect(Collectors.toMap(Function.identity(), category -> new DespawnRange(category.getNoDespawnDistance(), category.getDespawnDistance())));
++            public Map<MobCategory, DespawnRange> despawnRanges = Arrays.stream(MobCategory.values()).collect(Collectors.toMap(Function.identity(), category -> new DespawnRange(category.getDespawnDistance(), category.getNoDespawnDistance())));
+             @MergeMap
+             public Reference2IntMap<MobCategory> ticksPerSpawn = Util.make(new Reference2IntOpenHashMap<>(NaturalSpawner.SPAWNING_CATEGORIES.length), map -> Arrays.stream(NaturalSpawner.SPAWNING_CATEGORIES).forEach(mobCategory -> map.put(mobCategory, -1)));
+ 
+             @ConfigSerializable
+-            public record DespawnRange(@Required int soft, @Required int hard) {
++            public record DespawnRange(@Required int xzLimit, @Required int yLimit, @Required int xzSoftLimit, @Required int ySoftLimit) {
++                public DespawnRange(int hard, int soft) {
++                    this(hard, hard, soft, soft);
++                }
+             }
+-
++            
+             public WaterAnimalSpawnHeight wateranimalSpawnHeight;
+ 
+             public class WaterAnimalSpawnHeight extends ConfigurationPart {
 diff --git a/src/main/java/net/minecraft/commands/arguments/item/ItemInput.java b/src/main/java/net/minecraft/commands/arguments/item/ItemInput.java
 index a9617232c488a7a641b6657b265a5e42e77bc117..3d24fbca90bc7d8bdbac1be2176555c15ae75039 100644
 --- a/src/main/java/net/minecraft/commands/arguments/item/ItemInput.java
