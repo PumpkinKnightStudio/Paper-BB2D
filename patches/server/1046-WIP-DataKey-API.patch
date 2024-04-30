@@ -37,14 +37,15 @@ index 0000000000000000000000000000000000000000..264a8a14d2a778ef4eaa5937342b5978
 +}
 diff --git a/src/main/java/io/papermc/paper/datakey/ComponentAdapters.java b/src/main/java/io/papermc/paper/datakey/ComponentAdapters.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..d25c3fcb97f89760f60469e25e1f85c105cc115e
+index 0000000000000000000000000000000000000000..c430d4bcb664563f95b11996764ba91f885235e4
 --- /dev/null
 +++ b/src/main/java/io/papermc/paper/datakey/ComponentAdapters.java
-@@ -0,0 +1,75 @@
+@@ -0,0 +1,77 @@
 +package io.papermc.paper.datakey;
 +
 +import io.papermc.paper.adventure.PaperAdventure;
 +import io.papermc.paper.datakey.types.PaperChargedProjectiles;
++import io.papermc.paper.datakey.types.PaperItemEnchantments;
 +import io.papermc.paper.datakey.types.PaperItemLore;
 +import io.papermc.paper.datakey.types.PaperPotDecorations;
 +import io.papermc.paper.datakey.types.PaperUnbreakable;
@@ -90,6 +91,7 @@ index 0000000000000000000000000000000000000000..d25c3fcb97f89760f60469e25e1f85c1
 +        registerUntyped(DataComponents.FIRE_RESISTANT);
 +        register(DataComponents.POT_DECORATIONS, PaperPotDecorations::new);
 +        register(DataComponents.CHARGED_PROJECTILES, PaperChargedProjectiles::new);
++        register(DataComponents.ENCHANTMENTS, PaperItemEnchantments::new);
 +    }
 +
 +    public static void registerUntyped(final DataComponentType<Unit> type) {
@@ -427,10 +429,10 @@ index 0000000000000000000000000000000000000000..e6ebc39e96c9eb6f9869cfff258d4e25
 +}
 diff --git a/src/main/java/io/papermc/paper/datakey/types/ComponentTypesBridgesImpl.java b/src/main/java/io/papermc/paper/datakey/types/ComponentTypesBridgesImpl.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..d77c11e4022939ada8b3ee13b6d7cd147e03bd94
+index 0000000000000000000000000000000000000000..70019434663b9eb6c63ab341f9bc3a5fd9390a57
 --- /dev/null
 +++ b/src/main/java/io/papermc/paper/datakey/types/ComponentTypesBridgesImpl.java
-@@ -0,0 +1,24 @@
+@@ -0,0 +1,29 @@
 +package io.papermc.paper.datakey.types;
 +
 +public final class ComponentTypesBridgesImpl implements ComponentTypesBridge {
@@ -454,16 +456,22 @@ index 0000000000000000000000000000000000000000..d77c11e4022939ada8b3ee13b6d7cd14
 +    public ItemLore.Builder lore() {
 +        return new PaperItemLore.BuilderImpl();
 +    }
++
++    @Override
++    public ItemEnchantments.Builder enchantments() {
++        return new PaperItemEnchantments.BuilderImpl();
++    }
 +}
 diff --git a/src/main/java/io/papermc/paper/datakey/types/PaperChargedProjectiles.java b/src/main/java/io/papermc/paper/datakey/types/PaperChargedProjectiles.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..414e89666d0b2ba741c14113a6155fcef33b194e
+index 0000000000000000000000000000000000000000..e042fd7ea50111d496e04003bc22a13a961b60e2
 --- /dev/null
 +++ b/src/main/java/io/papermc/paper/datakey/types/PaperChargedProjectiles.java
-@@ -0,0 +1,60 @@
+@@ -0,0 +1,61 @@
 +package io.papermc.paper.datakey.types;
 +
 +import java.util.ArrayList;
++import java.util.Collections;
 +import java.util.List;
 +import java.util.Optional;
 +import net.minecraft.world.item.Item;
@@ -487,14 +495,14 @@ index 0000000000000000000000000000000000000000..414e89666d0b2ba741c14113a6155fce
 +    }
 +
 +    @Override
-+    public @NotNull @UnmodifiableView List<ItemStack> getItems() {
-+        List<net.minecraft.world.item.ItemStack> nmsItemStacks = this.impl.getItems();
-+        List<ItemStack> apiItemStacks = new ArrayList<>(nmsItemStacks.size());
-+        for (net.minecraft.world.item.ItemStack nmsItemStack : nmsItemStacks) {
-+            apiItemStacks.add(CraftItemStack.asCraftMirror(nmsItemStack));
++    public @NotNull List<ItemStack> getItems() {
++        final List<net.minecraft.world.item.ItemStack> nmsItemStacks = this.impl.getItems(); // gets copies of the stack
++        final List<ItemStack> apiItemStacks = new ArrayList<>(nmsItemStacks.size());
++        for (final net.minecraft.world.item.ItemStack nmsItemStack : nmsItemStacks) {
++            apiItemStacks.add(CraftItemStack.asCraftMirror(nmsItemStack.copy()));
 +        }
 +
-+        return apiItemStacks;
++        return Collections.unmodifiableList(apiItemStacks);
 +    }
 +
 +    static final class BuilderImpl implements Builder {
@@ -521,12 +529,109 @@ index 0000000000000000000000000000000000000000..414e89666d0b2ba741c14113a6155fce
 +        }
 +    }
 + }
+diff --git a/src/main/java/io/papermc/paper/datakey/types/PaperItemEnchantments.java b/src/main/java/io/papermc/paper/datakey/types/PaperItemEnchantments.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..85b4d15588bd50950048edd3d03f2afbaf0e63a2
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/datakey/types/PaperItemEnchantments.java
+@@ -0,0 +1,91 @@
++package io.papermc.paper.datakey.types;
++
++import java.util.Collections;
++import java.util.HashMap;
++import java.util.Map;
++import net.minecraft.core.Holder;
++import org.bukkit.craftbukkit.enchantments.CraftEnchantment;
++import org.bukkit.craftbukkit.util.Handleable;
++import org.bukkit.enchantments.Enchantment;
++import org.checkerframework.checker.nullness.qual.NonNull;
++import org.checkerframework.framework.qual.DefaultQualifier;
++import org.jetbrains.annotations.NotNull;
++
++@DefaultQualifier(NonNull.class)
++public record PaperItemEnchantments(
++    net.minecraft.world.item.enchantment.ItemEnchantments itemEnchantments,
++    Map<Enchantment, Integer> enchantments
++) implements ItemEnchantments, Handleable<net.minecraft.world.item.enchantment.ItemEnchantments> {
++
++    public PaperItemEnchantments(final net.minecraft.world.item.enchantment.ItemEnchantments itemEnchantments) {
++        this(itemEnchantments, convert(itemEnchantments));
++    }
++
++    private static Map<Enchantment, Integer> convert(final net.minecraft.world.item.enchantment.ItemEnchantments itemEnchantments) {
++        if (itemEnchantments.isEmpty()) {
++            return Collections.emptyMap();
++        }
++        final Map<Enchantment, Integer> map = new HashMap<>();
++        for (final Holder<net.minecraft.world.item.enchantment.Enchantment> nmsEnchantment : itemEnchantments.keySet()) {
++            map.put(CraftEnchantment.minecraftHolderToBukkit(nmsEnchantment), itemEnchantments.getLevel(nmsEnchantment.value()));
++        }
++        return Collections.unmodifiableMap(map); // TODO look into making a "transforming" map
++    }
++
++    @Override
++    public boolean showInTooltip() {
++        return this.itemEnchantments.showInTooltip;
++    }
++
++    @Override
++    public ItemEnchantments showInTooltip(final boolean showInTooltip) {
++        return new PaperItemEnchantments(this.itemEnchantments.withTooltip(showInTooltip), this.enchantments);
++    }
++
++    @Override
++    public net.minecraft.world.item.enchantment.ItemEnchantments getHandle() {
++        return this.itemEnchantments;
++    }
++
++    static final class BuilderImpl implements ItemEnchantments.Builder {
++
++        private final Map<Enchantment, Integer> enchantments = new HashMap<>();
++        private boolean showInTooltip = net.minecraft.world.item.enchantment.ItemEnchantments.EMPTY.showInTooltip; // default
++
++        @Override
++        public Builder add(final Enchantment enchantment, final int level) {
++            this.enchantments.put(enchantment, level);
++            return this;
++        }
++
++        @Override
++        public Builder addAll(final Map<Enchantment, Integer> enchantments) {
++            this.enchantments.putAll(enchantments);
++            return this;
++        }
++
++        @Override
++        public Builder remove(final Enchantment enchantment) {
++            this.enchantments.remove(enchantment);
++            return this;
++        }
++
++        @Override
++        public Builder showInTooltip(final boolean showInTooltip) {
++            this.showInTooltip = showInTooltip;
++            return this;
++        }
++
++        @Override
++        public ItemEnchantments build() {
++            if (this.enchantments.isEmpty()) {
++                return new PaperItemEnchantments(net.minecraft.world.item.enchantment.ItemEnchantments.EMPTY.withTooltip(this.showInTooltip));
++            }
++            final net.minecraft.world.item.enchantment.ItemEnchantments.Mutable mutable = new net.minecraft.world.item.enchantment.ItemEnchantments.Mutable(net.minecraft.world.item.enchantment.ItemEnchantments.EMPTY);
++            this.enchantments.forEach((enchantment, level) -> {
++                mutable.set(CraftEnchantment.bukkitToMinecraft(enchantment), level);
++            });
++            return new PaperItemEnchantments(mutable.toImmutable());
++        }
++    }
++}
 diff --git a/src/main/java/io/papermc/paper/datakey/types/PaperItemLore.java b/src/main/java/io/papermc/paper/datakey/types/PaperItemLore.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..02db3e26cbbcfe4b564a9699168de4d27005a1a0
+index 0000000000000000000000000000000000000000..7f4af0bbe6c2921d943234a910831d7ec7405581
 --- /dev/null
 +++ b/src/main/java/io/papermc/paper/datakey/types/PaperItemLore.java
-@@ -0,0 +1,66 @@
+@@ -0,0 +1,56 @@
 +package io.papermc.paper.datakey.types;
 +
 +import com.google.common.collect.Lists;
@@ -560,16 +665,6 @@ index 0000000000000000000000000000000000000000..02db3e26cbbcfe4b564a9699168de4d2
 +        return this.impl;
 +    }
 +
-+    @Override
-+    public List<Component> lines() {
-+        return this.lines;
-+    }
-+
-+    @Override
-+    public List<Component> styledLines() {
-+        return this.styledLines;
-+    }
-+
 +    static final class BuilderImpl implements ItemLore.Builder {
 +
 +        private List<? extends ComponentLike> lines = Collections.emptyList();
@@ -595,24 +690,24 @@ index 0000000000000000000000000000000000000000..02db3e26cbbcfe4b564a9699168de4d2
 +}
 diff --git a/src/main/java/io/papermc/paper/datakey/types/PaperPotDecorations.java b/src/main/java/io/papermc/paper/datakey/types/PaperPotDecorations.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..57fad01b4bc929577a54997ca3983519399d22fe
+index 0000000000000000000000000000000000000000..1bea817dbb8203e8715d13fb715c5d92d85c1f47
 --- /dev/null
 +++ b/src/main/java/io/papermc/paper/datakey/types/PaperPotDecorations.java
-@@ -0,0 +1,86 @@
+@@ -0,0 +1,82 @@
 +package io.papermc.paper.datakey.types;
 +
++import java.util.Optional;
 +import org.bukkit.Material;
 +import org.bukkit.craftbukkit.inventory.CraftItemType;
 +import org.bukkit.craftbukkit.util.Handleable;
 +import org.checkerframework.checker.nullness.qual.NonNull;
++import org.checkerframework.checker.nullness.qual.Nullable;
 +import org.checkerframework.framework.qual.DefaultQualifier;
-+import org.jetbrains.annotations.NotNull;
-+import org.jetbrains.annotations.Nullable;
-+import java.util.Optional;
 +
 +@DefaultQualifier(NonNull.class)
 +public record PaperPotDecorations(
-+    net.minecraft.world.level.block.entity.PotDecorations impl) implements PotDecorations, Handleable<net.minecraft.world.level.block.entity.PotDecorations> {
++    net.minecraft.world.level.block.entity.PotDecorations impl
++) implements PotDecorations, Handleable<net.minecraft.world.level.block.entity.PotDecorations> {
 +
 +    @Override
 +    public @Nullable Material back() {
@@ -641,41 +736,37 @@ index 0000000000000000000000000000000000000000..57fad01b4bc929577a54997ca3983519
 +
 +    static final class BuilderImpl implements Builder {
 +
-+        @Nullable
-+        private Material back;
-+        @Nullable
-+        private Material left;
-+        @Nullable
-+        private Material right;
-+        @Nullable
-+        private Material front;
++        private @Nullable Material back;
++        private @Nullable Material left;
++        private @Nullable Material right;
++        private @Nullable Material front;
 +
 +        @Override
-+        public Builder back(@Nullable final Material item) {
-+            this.back = item;
++        public Builder back(final @Nullable Material back) {
++            this.back = back;
 +            return this;
 +        }
 +
 +        @Override
-+        public Builder left(@Nullable final Material item) {
-+            this.left = item;
++        public Builder left(final @Nullable Material left) {
++            this.left = left;
 +            return this;
 +        }
 +
 +        @Override
-+        public Builder right(@Nullable final Material item) {
-+            this.right = item;
++        public Builder right(final @Nullable Material right) {
++            this.right = right;
 +            return this;
 +        }
 +
 +        @Override
-+        public Builder front(@Nullable final Material item) {
-+            this.front = item;
++        public Builder front(final @Nullable Material front) {
++            this.front = front;
 +            return this;
 +        }
 +
 +        @Override
-+        public @NotNull PotDecorations build() {
++        public PotDecorations build() {
 +            return new PaperPotDecorations(new net.minecraft.world.level.block.entity.PotDecorations(
 +                Optional.ofNullable(this.back).map(CraftItemType::bukkitToMinecraft),
 +                Optional.ofNullable(this.left).map(CraftItemType::bukkitToMinecraft),
@@ -684,7 +775,7 @@ index 0000000000000000000000000000000000000000..57fad01b4bc929577a54997ca3983519
 +            );
 +        }
 +    }
-+ }
++}
 diff --git a/src/main/java/io/papermc/paper/datakey/types/PaperUnbreakable.java b/src/main/java/io/papermc/paper/datakey/types/PaperUnbreakable.java
 new file mode 100644
 index 0000000000000000000000000000000000000000..8af596088fe4dd7d81f6d4d4ebf4c37121b442cb
@@ -731,6 +822,19 @@ index 0000000000000000000000000000000000000000..8af596088fe4dd7d81f6d4d4ebf4c371
 +        }
 +    }
 + }
+diff --git a/src/main/java/net/minecraft/world/item/enchantment/ItemEnchantments.java b/src/main/java/net/minecraft/world/item/enchantment/ItemEnchantments.java
+index af18de11dd55938b6091f5ab183bd3fe4e8df152..dad6cb4bbb52f4ce7e8f40131ee0bd3746f61441 100644
+--- a/src/main/java/net/minecraft/world/item/enchantment/ItemEnchantments.java
++++ b/src/main/java/net/minecraft/world/item/enchantment/ItemEnchantments.java
+@@ -63,7 +63,7 @@ public class ItemEnchantments implements TooltipProvider {
+         component -> component.showInTooltip,
+         ItemEnchantments::new
+     );
+-    final Object2IntAVLTreeMap<Holder<Enchantment>> enchantments; // Paper
++    public final Object2IntAVLTreeMap<Holder<Enchantment>> enchantments; // Paper - make public
+     public final boolean showInTooltip;
+ 
+     ItemEnchantments(Object2IntAVLTreeMap<Holder<Enchantment>> enchantments, boolean showInTooltip) { // Paper
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftRegistry.java b/src/main/java/org/bukkit/craftbukkit/CraftRegistry.java
 index 73472890e30180dc3cb6aa1bd9c5815087334682..9b75991344fa6c63fb8414aef062cde45d40d0cf 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftRegistry.java
