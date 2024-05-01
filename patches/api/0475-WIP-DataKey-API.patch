@@ -346,7 +346,7 @@ index 0000000000000000000000000000000000000000..8f22f62bc4b1d678190391a2aa734226
 +}
 diff --git a/src/main/java/io/papermc/paper/datakey/types/ComponentTypesBridge.java b/src/main/java/io/papermc/paper/datakey/types/ComponentTypesBridge.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..5c16dcc1f78de2d6a9183c79986043689c802651
+index 0000000000000000000000000000000000000000..e3214143cc38a3760d306098fc24fe4e1f6b1bf9
 --- /dev/null
 +++ b/src/main/java/io/papermc/paper/datakey/types/ComponentTypesBridge.java
 @@ -0,0 +1,28 @@
@@ -361,13 +361,13 @@ index 0000000000000000000000000000000000000000..5c16dcc1f78de2d6a9183c7998604368
 +
 +    ChargedProjectiles.Builder chargedProjectiles();
 +
-+    PotDecorations.Builder potDecorations();
-+
 +    Unbreakable.Builder unbreakable();
 +
 +    ItemLore.Builder lore();
 +
 +    ItemEnchantments.Builder enchantments();
++
++    ItemAttributeModifiers.Builder modifiers();
 +
 +    @ApiStatus.Internal
 +    final class Holder {
@@ -376,6 +376,48 @@ index 0000000000000000000000000000000000000000..5c16dcc1f78de2d6a9183c7998604368
 +        public static ComponentTypesBridge bridge() {
 +            return BRIDGE.orElseThrow();
 +        }
++    }
++}
+diff --git a/src/main/java/io/papermc/paper/datakey/types/ItemAttributeModifiers.java b/src/main/java/io/papermc/paper/datakey/types/ItemAttributeModifiers.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..818d2abb16d35fdb2830f3cbde4a63a6ea317bbe
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/datakey/types/ItemAttributeModifiers.java
+@@ -0,0 +1,36 @@
++package io.papermc.paper.datakey.types;
++
++import java.util.List;
++import org.bukkit.attribute.Attribute;
++import org.bukkit.attribute.AttributeModifier;
++import org.bukkit.inventory.EquipmentSlotGroup;
++import org.jetbrains.annotations.ApiStatus;
++import org.jetbrains.annotations.Contract;
++import org.jetbrains.annotations.NotNull;
++import org.jetbrains.annotations.Unmodifiable;
++
++@ApiStatus.NonExtendable
++public interface ItemAttributeModifiers extends ShownInTooltip<ItemAttributeModifiers> {
++
++    @Contract(pure = true)
++    @NotNull @Unmodifiable List<Entry> modifiers();
++
++    interface Entry {
++
++        @Contract(pure = true)
++        @NotNull Attribute attribute();
++
++        @Contract(pure = true)
++        @NotNull AttributeModifier modifier();
++    }
++
++    @ApiStatus.NonExtendable
++    interface Builder extends ShownInTooltip.Builder<Builder> {
++
++        @Contract(value = "_, _, _ -> this", mutates = "this")
++        @NotNull Builder addModifier(@NotNull Attribute attribute, @NotNull AttributeModifier attributeModifier, @NotNull EquipmentSlotGroup slot);
++
++        @Contract(value = "-> new", pure = true)
++        @NotNull ItemAttributeModifiers build();
 +    }
 +}
 diff --git a/src/main/java/io/papermc/paper/datakey/types/ItemEnchantments.java b/src/main/java/io/papermc/paper/datakey/types/ItemEnchantments.java
@@ -468,60 +510,6 @@ index 0000000000000000000000000000000000000000..9b2ffe96abfe7312be86736c306dc98b
 +        @Contract(value = "-> new", pure = true)
 +        @NotNull ItemLore build();
 +
-+    }
-+}
-diff --git a/src/main/java/io/papermc/paper/datakey/types/PotDecorations.java b/src/main/java/io/papermc/paper/datakey/types/PotDecorations.java
-new file mode 100644
-index 0000000000000000000000000000000000000000..d42247c1801390e380c7e6fe43d03777ec028c61
---- /dev/null
-+++ b/src/main/java/io/papermc/paper/datakey/types/PotDecorations.java
-@@ -0,0 +1,48 @@
-+package io.papermc.paper.datakey.types;
-+
-+import org.bukkit.Material;
-+import org.jetbrains.annotations.ApiStatus;
-+import org.jetbrains.annotations.Contract;
-+import org.jetbrains.annotations.NotNull;
-+import org.jetbrains.annotations.Nullable;
-+
-+@ApiStatus.NonExtendable
-+public interface PotDecorations {
-+
-+    @Contract(value = "-> new", pure = true)
-+    static PotDecorations.@NotNull Builder potDecorations() {
-+        return ComponentTypesBridge.Holder.bridge().potDecorations();
-+    }
-+
-+    @Nullable
-+    Material back();
-+
-+    @Nullable
-+    Material left();
-+
-+    @Nullable
-+    Material right();
-+
-+    @Nullable
-+    Material front();
-+
-+    @ApiStatus.NonExtendable
-+    interface Builder {
-+
-+        @Contract(value = "_ -> this", mutates = "this")
-+        Builder back(@Nullable Material back);
-+
-+        @Contract(value = "_ -> this", mutates = "this")
-+        Builder left(@Nullable Material left);
-+
-+        @Contract(value = "_ -> this", mutates = "this")
-+        Builder right(@Nullable Material right);
-+
-+        @Contract(value = "_ -> this", mutates = "this")
-+        Builder front(@Nullable Material front);
-+
-+        @Contract(value = "-> new", pure = true)
-+        @NotNull
-+        PotDecorations build();
 +    }
 +}
 diff --git a/src/main/java/io/papermc/paper/datakey/types/ShownInTooltip.java b/src/main/java/io/papermc/paper/datakey/types/ShownInTooltip.java

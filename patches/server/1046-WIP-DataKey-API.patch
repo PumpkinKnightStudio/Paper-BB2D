@@ -37,7 +37,7 @@ index 0000000000000000000000000000000000000000..264a8a14d2a778ef4eaa5937342b5978
 +}
 diff --git a/src/main/java/io/papermc/paper/datakey/ComponentAdapters.java b/src/main/java/io/papermc/paper/datakey/ComponentAdapters.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..c430d4bcb664563f95b11996764ba91f885235e4
+index 0000000000000000000000000000000000000000..338fbf8b12319bdc52e7874338a6262a370f2d66
 --- /dev/null
 +++ b/src/main/java/io/papermc/paper/datakey/ComponentAdapters.java
 @@ -0,0 +1,77 @@
@@ -45,9 +45,9 @@ index 0000000000000000000000000000000000000000..c430d4bcb664563f95b11996764ba91f
 +
 +import io.papermc.paper.adventure.PaperAdventure;
 +import io.papermc.paper.datakey.types.PaperChargedProjectiles;
++import io.papermc.paper.datakey.types.PaperItemAttributeModifiers;
 +import io.papermc.paper.datakey.types.PaperItemEnchantments;
 +import io.papermc.paper.datakey.types.PaperItemLore;
-+import io.papermc.paper.datakey.types.PaperPotDecorations;
 +import io.papermc.paper.datakey.types.PaperUnbreakable;
 +import java.util.HashMap;
 +import java.util.Map;
@@ -89,9 +89,9 @@ index 0000000000000000000000000000000000000000..c430d4bcb664563f95b11996764ba91f
 +        registerUntyped(DataComponents.CREATIVE_SLOT_LOCK);
 +        registerUntyped(DataComponents.INTANGIBLE_PROJECTILE);
 +        registerUntyped(DataComponents.FIRE_RESISTANT);
-+        register(DataComponents.POT_DECORATIONS, PaperPotDecorations::new);
 +        register(DataComponents.CHARGED_PROJECTILES, PaperChargedProjectiles::new);
 +        register(DataComponents.ENCHANTMENTS, PaperItemEnchantments::new);
++        register(DataComponents.ATTRIBUTE_MODIFIERS, PaperItemAttributeModifiers::new);
 +    }
 +
 +    public static void registerUntyped(final DataComponentType<Unit> type) {
@@ -429,7 +429,7 @@ index 0000000000000000000000000000000000000000..e6ebc39e96c9eb6f9869cfff258d4e25
 +}
 diff --git a/src/main/java/io/papermc/paper/datakey/types/ComponentTypesBridgesImpl.java b/src/main/java/io/papermc/paper/datakey/types/ComponentTypesBridgesImpl.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..70019434663b9eb6c63ab341f9bc3a5fd9390a57
+index 0000000000000000000000000000000000000000..10093ab578715d0cbd5e45e56861c831136a3516
 --- /dev/null
 +++ b/src/main/java/io/papermc/paper/datakey/types/ComponentTypesBridgesImpl.java
 @@ -0,0 +1,29 @@
@@ -440,11 +440,6 @@ index 0000000000000000000000000000000000000000..70019434663b9eb6c63ab341f9bc3a5f
 +    @Override
 +    public ChargedProjectiles.Builder chargedProjectiles() {
 +        return new PaperChargedProjectiles.BuilderImpl();
-+    }
-+
-+    @Override
-+    public PotDecorations.Builder potDecorations() {
-+        return new PaperPotDecorations.BuilderImpl();
 +    }
 +
 +    @Override
@@ -460,6 +455,11 @@ index 0000000000000000000000000000000000000000..70019434663b9eb6c63ab341f9bc3a5f
 +    @Override
 +    public ItemEnchantments.Builder enchantments() {
 +        return new PaperItemEnchantments.BuilderImpl();
++    }
++
++    @Override
++    public ItemAttributeModifiers.Builder modifiers() {
++        return new PaperItemAttributeModifiers.BuilderImpl();
 +    }
 +}
 diff --git a/src/main/java/io/papermc/paper/datakey/types/PaperChargedProjectiles.java b/src/main/java/io/papermc/paper/datakey/types/PaperChargedProjectiles.java
@@ -529,6 +529,101 @@ index 0000000000000000000000000000000000000000..e042fd7ea50111d496e04003bc22a13a
 +        }
 +    }
 + }
+diff --git a/src/main/java/io/papermc/paper/datakey/types/PaperItemAttributeModifiers.java b/src/main/java/io/papermc/paper/datakey/types/PaperItemAttributeModifiers.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..ef07131b58cb4f69b671832cdca31deff601eb1a
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/datakey/types/PaperItemAttributeModifiers.java
+@@ -0,0 +1,89 @@
++package io.papermc.paper.datakey.types;
++
++import com.google.common.collect.Lists;
++import java.util.ArrayList;
++import java.util.Collections;
++import java.util.List;
++import org.bukkit.attribute.Attribute;
++import org.bukkit.attribute.AttributeModifier;
++import org.bukkit.craftbukkit.CraftEquipmentSlot;
++import org.bukkit.craftbukkit.attribute.CraftAttribute;
++import org.bukkit.craftbukkit.attribute.CraftAttributeInstance;
++import org.bukkit.craftbukkit.util.Handleable;
++import org.bukkit.inventory.EquipmentSlotGroup;
++import org.checkerframework.checker.nullness.qual.NonNull;
++import org.checkerframework.framework.qual.DefaultQualifier;
++
++@DefaultQualifier(NonNull.class)
++public record PaperItemAttributeModifiers(
++    net.minecraft.world.item.component.ItemAttributeModifiers itemModifiers,
++    List<Entry> modifiers
++) implements ItemAttributeModifiers, Handleable<net.minecraft.world.item.component.ItemAttributeModifiers> {
++
++    public PaperItemAttributeModifiers(final net.minecraft.world.item.component.ItemAttributeModifiers itemModifiers) {
++        this(itemModifiers, convert(itemModifiers));
++    }
++
++    private static List<Entry> convert(net.minecraft.world.item.component.ItemAttributeModifiers nmsModifiers) {
++        return Collections.unmodifiableList(Lists.transform(nmsModifiers.modifiers(), nms -> {
++            return new PaperEntry(
++                CraftAttribute.minecraftHolderToBukkit(nms.attribute()),
++                CraftAttributeInstance.convert(nms.modifier(), org.bukkit.craftbukkit.CraftEquipmentSlot.getSlot(nms.slot()))
++            );
++        }));
++    }
++
++    @Override
++    public net.minecraft.world.item.component.ItemAttributeModifiers getHandle() {
++        return this.itemModifiers;
++    }
++
++    @Override
++    public boolean showInTooltip() {
++        return this.itemModifiers.showInTooltip();
++    }
++
++    @Override
++    public ItemAttributeModifiers showInTooltip(final boolean showInTooltip) {
++        return new PaperItemAttributeModifiers(this.itemModifiers.withTooltip(showInTooltip), this.modifiers);
++    }
++
++    // TODO maybe move to API as package-private so they can create Entry objects? not sure if needed
++    public record PaperEntry(Attribute attribute, AttributeModifier modifier) implements ItemAttributeModifiers.Entry {
++    }
++
++    static final class BuilderImpl implements ItemAttributeModifiers.Builder {
++
++        private boolean showInTooltip = net.minecraft.world.item.component.ItemAttributeModifiers.EMPTY.showInTooltip();
++        private final List<net.minecraft.world.item.component.ItemAttributeModifiers.Entry> entries = new ArrayList<>();
++
++        @Override
++        public Builder addModifier(final Attribute attribute, final AttributeModifier attributeModifier, final EquipmentSlotGroup slot) {
++            this.entries.add(new net.minecraft.world.item.component.ItemAttributeModifiers.Entry(
++                CraftAttribute.bukkitToMinecraftHolder(attribute),
++                CraftAttributeInstance.convert(attributeModifier),
++                CraftEquipmentSlot.getNMSGroup(attributeModifier.getSlotGroup())
++            ));
++            return this;
++        }
++
++        @Override
++        public Builder showInTooltip(final boolean showInTooltip) {
++            this.showInTooltip = showInTooltip;
++            return this;
++        }
++
++        @Override
++        public ItemAttributeModifiers build() {
++            if (this.entries.isEmpty()) {
++                return new PaperItemAttributeModifiers(net.minecraft.world.item.component.ItemAttributeModifiers.EMPTY);
++            }
++            return new PaperItemAttributeModifiers(
++                new net.minecraft.world.item.component.ItemAttributeModifiers(
++                    this.entries,
++                    this.showInTooltip
++                )
++            );
++        }
++    }
++}
 diff --git a/src/main/java/io/papermc/paper/datakey/types/PaperItemEnchantments.java b/src/main/java/io/papermc/paper/datakey/types/PaperItemEnchantments.java
 new file mode 100644
 index 0000000000000000000000000000000000000000..85b4d15588bd50950048edd3d03f2afbaf0e63a2
@@ -688,94 +783,6 @@ index 0000000000000000000000000000000000000000..7f4af0bbe6c2921d943234a910831d7e
 +        }
 +    }
 +}
-diff --git a/src/main/java/io/papermc/paper/datakey/types/PaperPotDecorations.java b/src/main/java/io/papermc/paper/datakey/types/PaperPotDecorations.java
-new file mode 100644
-index 0000000000000000000000000000000000000000..1bea817dbb8203e8715d13fb715c5d92d85c1f47
---- /dev/null
-+++ b/src/main/java/io/papermc/paper/datakey/types/PaperPotDecorations.java
-@@ -0,0 +1,82 @@
-+package io.papermc.paper.datakey.types;
-+
-+import java.util.Optional;
-+import org.bukkit.Material;
-+import org.bukkit.craftbukkit.inventory.CraftItemType;
-+import org.bukkit.craftbukkit.util.Handleable;
-+import org.checkerframework.checker.nullness.qual.NonNull;
-+import org.checkerframework.checker.nullness.qual.Nullable;
-+import org.checkerframework.framework.qual.DefaultQualifier;
-+
-+@DefaultQualifier(NonNull.class)
-+public record PaperPotDecorations(
-+    net.minecraft.world.level.block.entity.PotDecorations impl
-+) implements PotDecorations, Handleable<net.minecraft.world.level.block.entity.PotDecorations> {
-+
-+    @Override
-+    public @Nullable Material back() {
-+        return this.impl.back().map(CraftItemType::minecraftToBukkit).orElse(null);
-+    }
-+
-+    @Override
-+    public @Nullable Material left() {
-+        return this.impl.left().map(CraftItemType::minecraftToBukkit).orElse(null);
-+    }
-+
-+    @Override
-+    public @Nullable Material right() {
-+        return this.impl.right().map(CraftItemType::minecraftToBukkit).orElse(null);
-+    }
-+
-+    @Override
-+    public @Nullable Material front() {
-+        return this.impl.front().map(CraftItemType::minecraftToBukkit).orElse(null);
-+    }
-+
-+    @Override
-+    public net.minecraft.world.level.block.entity.PotDecorations getHandle() {
-+        return this.impl;
-+    }
-+
-+    static final class BuilderImpl implements Builder {
-+
-+        private @Nullable Material back;
-+        private @Nullable Material left;
-+        private @Nullable Material right;
-+        private @Nullable Material front;
-+
-+        @Override
-+        public Builder back(final @Nullable Material back) {
-+            this.back = back;
-+            return this;
-+        }
-+
-+        @Override
-+        public Builder left(final @Nullable Material left) {
-+            this.left = left;
-+            return this;
-+        }
-+
-+        @Override
-+        public Builder right(final @Nullable Material right) {
-+            this.right = right;
-+            return this;
-+        }
-+
-+        @Override
-+        public Builder front(final @Nullable Material front) {
-+            this.front = front;
-+            return this;
-+        }
-+
-+        @Override
-+        public PotDecorations build() {
-+            return new PaperPotDecorations(new net.minecraft.world.level.block.entity.PotDecorations(
-+                Optional.ofNullable(this.back).map(CraftItemType::bukkitToMinecraft),
-+                Optional.ofNullable(this.left).map(CraftItemType::bukkitToMinecraft),
-+                Optional.ofNullable(this.right).map(CraftItemType::bukkitToMinecraft),
-+                Optional.ofNullable(this.front).map(CraftItemType::bukkitToMinecraft))
-+            );
-+        }
-+    }
-+}
 diff --git a/src/main/java/io/papermc/paper/datakey/types/PaperUnbreakable.java b/src/main/java/io/papermc/paper/datakey/types/PaperUnbreakable.java
 new file mode 100644
 index 0000000000000000000000000000000000000000..8af596088fe4dd7d81f6d4d4ebf4c37121b442cb
@@ -851,6 +858,19 @@ index 73472890e30180dc3cb6aa1bd9c5815087334682..9b75991344fa6c63fb8414aef062cde4
  
          return null;
      }
+diff --git a/src/main/java/org/bukkit/craftbukkit/attribute/CraftAttributeInstance.java b/src/main/java/org/bukkit/craftbukkit/attribute/CraftAttributeInstance.java
+index bd0f7dceab1a74dbb7486e126e31152579f987de..522aca8843608672c3c7766420ae699b45f0f012 100644
+--- a/src/main/java/org/bukkit/craftbukkit/attribute/CraftAttributeInstance.java
++++ b/src/main/java/org/bukkit/craftbukkit/attribute/CraftAttributeInstance.java
+@@ -97,7 +97,7 @@ public class CraftAttributeInstance implements AttributeInstance {
+         return new AttributeModifier(nms.id(), nms.name, nms.amount(), AttributeModifier.Operation.values()[nms.operation().ordinal()]);
+     }
+ 
+-    public static AttributeModifier convert(net.minecraft.world.entity.ai.attributes.AttributeModifier nms, EquipmentSlot slot) {
++    public static AttributeModifier convert(net.minecraft.world.entity.ai.attributes.AttributeModifier nms, org.bukkit.inventory.EquipmentSlotGroup slot) { // Paper
+         return new AttributeModifier(nms.id(), nms.name, nms.amount(), AttributeModifier.Operation.values()[nms.operation().ordinal()], slot);
+     }
+ }
 diff --git a/src/main/java/org/bukkit/craftbukkit/inventory/CraftItemStack.java b/src/main/java/org/bukkit/craftbukkit/inventory/CraftItemStack.java
 index eba5a27e452c4063567fb02d6aabdfb0446d5daf..6852453213bd4f62611ad685952871427862d97f 100644
 --- a/src/main/java/org/bukkit/craftbukkit/inventory/CraftItemStack.java
@@ -957,6 +977,31 @@ index 38454fdc978a24a35e685e65e9b41323781c3ead..6d0a7dc5ac0862c6c4090d877b764ab9
          if (this.hasDisplayName()) {
              itemTag.put(CraftMetaItem.NAME, this.displayName);
          }
+diff --git a/src/main/java/org/bukkit/craftbukkit/util/CraftMagicNumbers.java b/src/main/java/org/bukkit/craftbukkit/util/CraftMagicNumbers.java
+index 2afd0335334fc2392503e598919b3eec95c73961..5910fdc9f0607954d3808a53a12c39f3fb4ce0c5 100644
+--- a/src/main/java/org/bukkit/craftbukkit/util/CraftMagicNumbers.java
++++ b/src/main/java/org/bukkit/craftbukkit/util/CraftMagicNumbers.java
+@@ -422,12 +422,15 @@ public final class CraftMagicNumbers implements UnsafeValues {
+             throw new IllegalArgumentException(material + " is not an item and therefore does not have attributes");
+         }
+         final ImmutableMultimap.Builder<Attribute, AttributeModifier> defaultAttributes = ImmutableMultimap.builder();
+-        ItemAttributeModifiers nmsDefaultAttributes = item.components().getOrDefault(net.minecraft.core.component.DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY);
++        final ItemAttributeModifiers nmsDefaultAttributes = item.components().getOrDefault(net.minecraft.core.component.DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY);
++        final net.minecraft.world.entity.EquipmentSlot nmsSlot = CraftEquipmentSlot.getNMS(slot);
++        for (final ItemAttributeModifiers.Entry entry : nmsDefaultAttributes.modifiers()) {
++            if (entry.slot().test(nmsSlot)) {
++                final Attribute attribute = CraftAttribute.minecraftHolderToBukkit(entry.attribute());
++                defaultAttributes.put(attribute, CraftAttributeInstance.convert(entry.modifier(), CraftEquipmentSlot.getSlot(entry.slot())));
++            }
++        }
+         // Paper end - fix item default attribute API
+-        nmsDefaultAttributes.forEach(CraftEquipmentSlot.getNMS(slot), (key, value) -> {
+-            Attribute attribute = CraftAttribute.minecraftToBukkit(key.value());
+-            defaultAttributes.put(attribute, CraftAttributeInstance.convert(value, slot));
+-        });
+ 
+         return defaultAttributes.build();
+     }
 diff --git a/src/main/resources/META-INF/services/io.papermc.paper.datakey.map.DataComponentPatchMapBridge b/src/main/resources/META-INF/services/io.papermc.paper.datakey.map.DataComponentPatchMapBridge
 new file mode 100644
 index 0000000000000000000000000000000000000000..9fd7c2b9089b3a13834fcca23e9a7c47c0cead83
