@@ -6,41 +6,46 @@ Subject: [PATCH] WIP DataKey API
 
 diff --git a/src/main/java/io/papermc/paper/datakey/DataComponentType.java b/src/main/java/io/papermc/paper/datakey/DataComponentType.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..fcabc30aaf05c3bc0cc4ef38b5df9978d085fbaf
+index 0000000000000000000000000000000000000000..089047983db1e72f7144fd549c592ae8fdeeab38
 --- /dev/null
 +++ b/src/main/java/io/papermc/paper/datakey/DataComponentType.java
-@@ -0,0 +1,20 @@
+@@ -0,0 +1,24 @@
 +package io.papermc.paper.datakey;
 +
 +import net.kyori.adventure.key.Key;
 +import org.bukkit.Keyed;
++import org.jetbrains.annotations.ApiStatus;
 +import org.jetbrains.annotations.NotNull;
 +
++@ApiStatus.NonExtendable
 +public interface DataComponentType extends Keyed {
 +
-+    @NotNull
 +    @Override
-+    Key key();
++    @NotNull Key key();
 +
++    @SuppressWarnings("unused")
++    @ApiStatus.NonExtendable
 +    interface Valued<T> extends DataComponentType {
 +
 +    }
 +
++    @ApiStatus.NonExtendable
 +    interface NonValued extends DataComponentType {
 +
 +    }
 +}
 diff --git a/src/main/java/io/papermc/paper/datakey/DataComponentTypes.java b/src/main/java/io/papermc/paper/datakey/DataComponentTypes.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..cbb8413356b0991e844ea443607b9561fcf298c6
+index 0000000000000000000000000000000000000000..738a79250670edc31ca80a133a007e40eed861df
 --- /dev/null
 +++ b/src/main/java/io/papermc/paper/datakey/DataComponentTypes.java
-@@ -0,0 +1,78 @@
+@@ -0,0 +1,79 @@
 +package io.papermc.paper.datakey;
 +
 +import io.papermc.paper.datakey.types.ChargedProjectiles;
++import io.papermc.paper.datakey.types.ItemAttributeModifiers;
++import io.papermc.paper.datakey.types.ItemEnchantments;
 +import io.papermc.paper.datakey.types.ItemLore;
-+import io.papermc.paper.datakey.types.PotDecorations;
 +import io.papermc.paper.datakey.types.Unbreakable;
 +import net.kyori.adventure.text.Component;
 +import org.bukkit.NamespacedKey;
@@ -57,10 +62,10 @@ index 0000000000000000000000000000000000000000..cbb8413356b0991e844ea443607b9561
 +    public static final DataComponentType.Valued<Component> ITEM_NAME = valued("item_name");
 +    public static final DataComponentType.Valued<ItemLore> LORE = valued("lore");
 +    public static final DataComponentType.Valued<ItemRarity> RARITY = valued("rarity");
-+    // enchantments
++    public static final DataComponentType.Valued<ItemEnchantments> ENCHANTMENTS = valued("enchantments");
 +    // can_place_on
 +    // can_break
-+    // attribute_modifiers
++    public static final DataComponentType.Valued<ItemAttributeModifiers> ATTRIBUTE_MODIFIERS = valued("attribute_modifiers");
 +    // custom_model_data
 +    public static final DataComponentType.NonValued HIDE_ADDITIONAL_TOOLTIP = unvalued("hide_additional_tooltip");
 +    public static final DataComponentType.NonValued  HIDE_TOOLTIP = unvalued("hide_tooltip");
@@ -71,7 +76,7 @@ index 0000000000000000000000000000000000000000..cbb8413356b0991e844ea443607b9561
 +    // food
 +    public static final DataComponentType.NonValued FIRE_RESISTANT = unvalued("fire_resistant");
 +    // tool
-+    // stored_enchantments
++    public static final DataComponentType.Valued<ItemEnchantments> STORED_ENCHANTMENTS = valued("stored_enchantments");
 +    // dyed_color
 +    // map_color
 +    // map_id
@@ -98,7 +103,7 @@ index 0000000000000000000000000000000000000000..cbb8413356b0991e844ea443607b9561
 +    // note_block_sound
 +    // banner_patterns
 +    // base_color
-+    public static final DataComponentType.Valued<PotDecorations> POT_DECORATIONS = valued("pot_decorations");
++    // pot decorations
 +    // container
 +    // block_state
 +    // bees
@@ -116,7 +121,7 @@ index 0000000000000000000000000000000000000000..cbb8413356b0991e844ea443607b9561
 +}
 diff --git a/src/main/java/io/papermc/paper/datakey/map/DataComponentMap.java b/src/main/java/io/papermc/paper/datakey/map/DataComponentMap.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..cfe995362afd1245cd72571dadd2f940409490b7
+index 0000000000000000000000000000000000000000..3be38b19b1cf0c5ef89585c7b6610b7cf23d53be
 --- /dev/null
 +++ b/src/main/java/io/papermc/paper/datakey/map/DataComponentMap.java
 @@ -0,0 +1,31 @@
@@ -127,6 +132,7 @@ index 0000000000000000000000000000000000000000..cfe995362afd1245cd72571dadd2f940
 +import org.jetbrains.annotations.NotNull;
 +import org.jetbrains.annotations.Nullable;
 +import java.util.Set;
++import org.jetbrains.annotations.Unmodifiable;
 +
 +public interface DataComponentMap {
 +
@@ -139,7 +145,7 @@ index 0000000000000000000000000000000000000000..cfe995362afd1245cd72571dadd2f940
 +    <T> @Nullable T get(DataComponentType.@NotNull Valued<T> type);
 +
 +    @Contract(value = "_, !null -> !null", pure = true)
-+    default <T> @Nullable T getOrDefault(final DataComponentType.@Nullable Valued<? extends T> type, final @Nullable T fallback) {
++    default <T> @Nullable T getOrDefault(final DataComponentType.@NotNull Valued<? extends T> type, final @Nullable T fallback) {
 +        final T object = this.get(type);
 +        return object != null ? object : fallback;
 +    }
@@ -148,8 +154,7 @@ index 0000000000000000000000000000000000000000..cfe995362afd1245cd72571dadd2f940
 +    boolean has(@NotNull DataComponentType type);
 +
 +    @Contract(pure = true)
-+    Set<DataComponentType> keySet();
-+
++    @NotNull @Unmodifiable Set<DataComponentType> keySet();
 +}
 diff --git a/src/main/java/io/papermc/paper/datakey/map/DataComponentPatchMapBridge.java b/src/main/java/io/papermc/paper/datakey/map/DataComponentPatchMapBridge.java
 new file mode 100644
@@ -189,7 +194,7 @@ index 0000000000000000000000000000000000000000..5d60b4c1a7f2588838145001865236ce
 +}
 diff --git a/src/main/java/io/papermc/paper/datakey/map/PatchedDataComponentMap.java b/src/main/java/io/papermc/paper/datakey/map/PatchedDataComponentMap.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..a4d2bbb2395cd6bc5a73064d8ae656a103670a29
+index 0000000000000000000000000000000000000000..0748f3605321478ff0289fbcc6ae0882f66c1e36
 --- /dev/null
 +++ b/src/main/java/io/papermc/paper/datakey/map/PatchedDataComponentMap.java
 @@ -0,0 +1,59 @@
@@ -202,13 +207,11 @@ index 0000000000000000000000000000000000000000..a4d2bbb2395cd6bc5a73064d8ae656a1
 +
 +public interface PatchedDataComponentMap extends DataComponentMap {
 +
-+    @NotNull
-+    static PatchedDataComponentMap empty() {
++    static @NotNull PatchedDataComponentMap empty() {
 +        return DataComponentPatchMapBridge.Holder.bridge().of(DataComponentPatchMapBridge.Holder.bridge().empty());
 +    }
 +
-+    @NotNull
-+    static PatchedDataComponentMap of(@NotNull final DataComponentMap map) {
++    static @NotNull PatchedDataComponentMap of(final @NotNull DataComponentMap map) {
 +        return DataComponentPatchMapBridge.Holder.bridge().of(map);
 +    }
 +
@@ -244,6 +247,8 @@ index 0000000000000000000000000000000000000000..a4d2bbb2395cd6bc5a73064d8ae656a1
 +     * @param type data component type to reset
 +     */
 +    void reset(@NotNull DataComponentType type);
++
++
 +
 +    @NotNull DataKeyMapPatch asPatch();
 +
@@ -537,7 +542,7 @@ index 0000000000000000000000000000000000000000..a54155cacb4052a43395c8599365b50f
 +}
 diff --git a/src/main/java/io/papermc/paper/datakey/types/Unbreakable.java b/src/main/java/io/papermc/paper/datakey/types/Unbreakable.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..7121975887128582c8c59190365a7c74663a6648
+index 0000000000000000000000000000000000000000..1fe6d7a9a552f9150e8519d8707a4149b0036e4d
 --- /dev/null
 +++ b/src/main/java/io/papermc/paper/datakey/types/Unbreakable.java
 @@ -0,0 +1,27 @@
@@ -561,7 +566,7 @@ index 0000000000000000000000000000000000000000..7121975887128582c8c59190365a7c74
 +    }
 +
 +    @ApiStatus.NonExtendable
-+    interface Builder extends AbstractShownInTooltip.Builder<Builder> {
++    interface Builder extends ShownInTooltip.Builder<Builder> {
 +
 +        @Contract(value = "-> new", pure = true)
 +        @NotNull Unbreakable build();
@@ -607,7 +612,7 @@ index 98a970a6582dca22e719a31559c7becea4725cb2..84708afee2316108babbd64c9c667146
  
      /**
 diff --git a/src/main/java/org/bukkit/inventory/ItemStack.java b/src/main/java/org/bukkit/inventory/ItemStack.java
-index 84a7bf0936d35bf42b5ed038d295d5c31740f472..6ff3c5150d04b15552286a5f86a54efca4c2fcb6 100644
+index 84a7bf0936d35bf42b5ed038d295d5c31740f472..471609fa22f036ba16c7b60ca6f07d30eacf46d2 100644
 --- a/src/main/java/org/bukkit/inventory/ItemStack.java
 +++ b/src/main/java/org/bukkit/inventory/ItemStack.java
 @@ -1,7 +1,6 @@
@@ -760,7 +765,7 @@ index 84a7bf0936d35bf42b5ed038d295d5c31740f472..6ff3c5150d04b15552286a5f86a54efc
       */
      public boolean hasItemMeta() {
 -        return !Bukkit.getItemFactory().equals(meta, null);
-+        return true; // Paper - every item now has meta!
++        return !Bukkit.getItemFactory().equals(this.getItemMeta(), null); // Paper
      }
  
      /**
