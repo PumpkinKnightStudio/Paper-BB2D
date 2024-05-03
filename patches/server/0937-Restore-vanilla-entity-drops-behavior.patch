@@ -9,10 +9,10 @@ on dropping the item instead of generalizing it for all dropped
 items like CB does.
 
 diff --git a/src/main/java/net/minecraft/server/level/ServerPlayer.java b/src/main/java/net/minecraft/server/level/ServerPlayer.java
-index e447aa85b51c7e28fcd89bf8aa7602c88d599239..0d4224c56bcdff54bbf6cc2d9d25e4d7b0ba187b 100644
+index ce4006ae37f9c2f1da8a5064460dd2dc8118c7bb..898287fc4517af9230334464c8eed36b88b477d8 100644
 --- a/src/main/java/net/minecraft/server/level/ServerPlayer.java
 +++ b/src/main/java/net/minecraft/server/level/ServerPlayer.java
-@@ -968,22 +968,20 @@ public class ServerPlayer extends Player {
+@@ -969,22 +969,20 @@ public class ServerPlayer extends Player {
          if (this.isRemoved()) {
              return;
          }
@@ -38,7 +38,7 @@ index e447aa85b51c7e28fcd89bf8aa7602c88d599239..0d4224c56bcdff54bbf6cc2d9d25e4d7
          this.drops.clear(); // SPIGOT-5188: make sure to clear
          } // Paper - fix player loottables running when mob loot gamerule is false
  
-@@ -2481,8 +2479,8 @@ public class ServerPlayer extends Player {
+@@ -2482,8 +2480,8 @@ public class ServerPlayer extends Player {
      }
  
      @Override

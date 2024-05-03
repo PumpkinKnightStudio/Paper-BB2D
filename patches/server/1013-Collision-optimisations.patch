@@ -2179,10 +2179,10 @@ index 03c45ee77276462818a6f774b5945b25924aa3f0..ab289a6ca85459e03acb2089c6b9e931
      private Direction(
          final int id,
 diff --git a/src/main/java/net/minecraft/server/level/ServerPlayer.java b/src/main/java/net/minecraft/server/level/ServerPlayer.java
-index a0d16e8289d6e35bb1e92623642386ac0c0552be..9079a7c4ca27eedc346312282d6f6f78ca6fd205 100644
+index 768a946318d709fdcb9e3147e3e3cd9b59568cfc..5dd11b561843150273ffcbffe7744a50ef726574 100644
 --- a/src/main/java/net/minecraft/server/level/ServerPlayer.java
 +++ b/src/main/java/net/minecraft/server/level/ServerPlayer.java
-@@ -522,7 +522,7 @@ public class ServerPlayer extends Player {
+@@ -523,7 +523,7 @@ public class ServerPlayer extends Player {
  
                  if (blockposition1 != null) {
                      this.moveTo(blockposition1, world.getSharedSpawnAngle(), 0.0F); // Paper - MC-200092 - fix first spawn pos yaw being ignored
@@ -2191,7 +2191,7 @@ index a0d16e8289d6e35bb1e92623642386ac0c0552be..9079a7c4ca27eedc346312282d6f6f78
                          break;
                      }
                  }
-@@ -530,7 +530,7 @@ public class ServerPlayer extends Player {
+@@ -531,7 +531,7 @@ public class ServerPlayer extends Player {
          } else {
              this.moveTo(blockposition, world.getSharedSpawnAngle(), 0.0F); // Paper - MC-200092 - fix first spawn pos yaw being ignored
  
