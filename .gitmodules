@@ -3,7 +3,7 @@
 	url = https://hub.spigotmc.org/stash/scm/spigot/bukkit.git
 [submodule "work/CraftBukkit"]
 	path = work/CraftBukkit
-	url = https://hub.spigotmc.org/stash/scm/spigot/craftbukkit.git
+	url = https://github.com/PumpkinKnightStudio/CraftBukkit.git
 [submodule "work/BuildData"]
 	path = work/BuildData
 	url = https://hub.spigotmc.org/stash/scm/spigot/builddata.git
