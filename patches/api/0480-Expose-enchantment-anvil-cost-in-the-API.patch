@@ -1,0 +1,27 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Janet Blackquill <uhhadd@gmail.com>
+Date: Thu, 9 May 2024 13:09:40 -0400
+Subject: [PATCH] Expose enchantment anvil cost in the API
+
+
+diff --git a/src/main/java/org/bukkit/enchantments/Enchantment.java b/src/main/java/org/bukkit/enchantments/Enchantment.java
+index 48a01a1eb80475adf9b181e9bd81535e9faec233..ec0429640f1a395e4d7765500fd41ce347ae8b03 100644
+--- a/src/main/java/org/bukkit/enchantments/Enchantment.java
++++ b/src/main/java/org/bukkit/enchantments/Enchantment.java
+@@ -369,6 +369,16 @@ public abstract class Enchantment implements Keyed, Translatable, net.kyori.adve
+      */
+     public abstract int getMaxModifiedCost(int level);
+ 
++    /**
++     * Gets cost of applying this enchantment using an anvil.
++     * <p>
++     * Note that this is halved when using an enchantment book, and is multiplied by the level of the enchantment.
++     * See <a href="https://minecraft.wiki/w/Anvil_mechanics">https://minecraft.wiki/w/Anvil_mechanics</a> for more information.
++     * </p>
++     * @return The anvil cost of this enchantment
++     */
++    public abstract int getAnvilCost();
++
+     /**
+      * Gets the rarity of this enchantment.
+      *
