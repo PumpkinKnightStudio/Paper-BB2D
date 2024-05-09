@@ -1,0 +1,1392 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Owen1212055 <23108066+Owen1212055@users.noreply.github.com>
+Date: Mon, 1 Aug 2022 22:50:29 -0400
+Subject: [PATCH] Brigadier based command API
+
+
+diff --git a/build.gradle.kts b/build.gradle.kts
+index eecf458e1250ee9968630cf5c3c3287a1693e52e..f0b811fde02d79c958af624d34674ae089d0c88c 100644
+--- a/build.gradle.kts
++++ b/build.gradle.kts
+@@ -27,6 +27,7 @@ configurations.api {
+ }
+ 
+ dependencies {
++    api("com.mojang:brigadier:1.1.8") // Paper - Brigadier command api
+     // api dependencies are listed transitively to API consumers
+     api("com.google.guava:guava:32.1.2-jre")
+     api("com.google.code.gson:gson:2.10.1")
+diff --git a/src/main/java/io/papermc/paper/command/brigadier/BasicCommand.java b/src/main/java/io/papermc/paper/command/brigadier/BasicCommand.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..ffb1ecddcee876f36bd813f3f3fe59d8584be926
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/command/brigadier/BasicCommand.java
+@@ -0,0 +1,36 @@
++package io.papermc.paper.command.brigadier;
++
++import java.util.Collection;
++import java.util.Collections;
++import org.jetbrains.annotations.ApiStatus;
++import org.jetbrains.annotations.NotNull;
++
++/**
++ * Implementing this interface allows for easily creating "Bukkit-style" {@code String[] args} commands.
++ * The implementation handles converting the command to a representation compatible with Brigadier on registration, usually in the form of {@literal /commandlabel <greedy_string>}.
++ */
++@ApiStatus.Experimental
++@FunctionalInterface
++public interface BasicCommand {
++
++    /**
++     * Executes the command with the given {@link CommandSourceStack} and arguments.
++     *
++     * @param commandSourceStack the commandSourceStack of the command.
++     * @param args the arguments of the command ignoring repeated spaces
++     */
++    @ApiStatus.OverrideOnly
++    void execute(@NotNull CommandSourceStack commandSourceStack, @NotNull String[] args);
++
++    /**
++     * Suggests possible completions for the given command {@link CommandSourceStack} and arguments.
++     *
++     * @param commandSourceStack the commandSourceStack of the command.
++     * @param args the arguments of the command including repeated spaces
++     * @return a collection of suggestions
++     */
++    @ApiStatus.OverrideOnly
++    default @NotNull Collection<String> suggest(final @NotNull CommandSourceStack commandSourceStack, final @NotNull String[] args) {
++        return Collections.emptyList();
++    }
++}
+diff --git a/src/main/java/io/papermc/paper/command/brigadier/CommandRegistrationFlag.java b/src/main/java/io/papermc/paper/command/brigadier/CommandRegistrationFlag.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..2b2f14cda4e83c65721a524c098f7f708b4068f1
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/command/brigadier/CommandRegistrationFlag.java
+@@ -0,0 +1,15 @@
++package io.papermc.paper.command.brigadier;
++
++import org.jetbrains.annotations.ApiStatus;
++
++/**
++ * A {@link CommandRegistrationFlag} is used in {@link Commands} registration for internal purposes.
++ * <p>
++ * A command library may use this to achieve more specific customization on how their commands are registered.
++ * <p>
++ * Stability of these flags is not promised! This api is not intended for public use.
++ */
++@ApiStatus.Internal
++public enum CommandRegistrationFlag {
++    FLATTEN_ALIASES
++}
+diff --git a/src/main/java/io/papermc/paper/command/brigadier/CommandSourceStack.java b/src/main/java/io/papermc/paper/command/brigadier/CommandSourceStack.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..86912d38969982cb7655e0f2454ef5b61058f67f
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/command/brigadier/CommandSourceStack.java
+@@ -0,0 +1,40 @@
++package io.papermc.paper.command.brigadier;
++
++import org.bukkit.Location;
++import org.bukkit.command.CommandSender;
++import org.bukkit.entity.Entity;
++import org.jetbrains.annotations.ApiStatus;
++import org.jetbrains.annotations.NotNull;
++import org.jetbrains.annotations.Nullable;
++
++/**
++ * The command source type for Brigadier commands registered using Paper API.
++ * <p>
++ * While the general use case for CommandSourceStack is similar to that of {@link CommandSender}, it provides access to important additional context for the command execution.
++ * Specifically, commands such as {@literal /execute} may alter the location or executor of the source stack before passing it to another command.
++ *
++ */
++@ApiStatus.NonExtendable
++@ApiStatus.Experimental
++public interface CommandSourceStack {
++
++    /**
++     * Gets the location that this command is being executed at.
++     * @return location
++     */
++    @NotNull Location getLocation();
++
++    /**
++     * Gets the sender that executed this command.
++     * @return source type
++     */
++    @NotNull CommandSender getSender();
++
++    /**
++     * Gets the entity that triggered the execution of this command.
++     * May not always be the command source.
++     *
++     * @return entity that triggered execution
++     */
++    @Nullable Entity getExecutor();
++}
+diff --git a/src/main/java/io/papermc/paper/command/brigadier/Commands.java b/src/main/java/io/papermc/paper/command/brigadier/Commands.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..dd543968dbc1e1c76c14c277777a7e227167505f
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/command/brigadier/Commands.java
+@@ -0,0 +1,254 @@
++package io.papermc.paper.command.brigadier;
++
++import com.mojang.brigadier.CommandDispatcher;
++import com.mojang.brigadier.arguments.ArgumentType;
++import com.mojang.brigadier.builder.LiteralArgumentBuilder;
++import com.mojang.brigadier.builder.RequiredArgumentBuilder;
++import com.mojang.brigadier.tree.LiteralCommandNode;
++import io.papermc.paper.plugin.configuration.PluginMeta;
++import io.papermc.paper.plugin.lifecycle.event.registrar.Registrar;
++import java.util.Collections;
++import java.util.List;
++import java.util.Set;
++import org.jetbrains.annotations.ApiStatus;
++import org.jetbrains.annotations.NotNull;
++import org.jetbrains.annotations.Nullable;
++
++/**
++ * The registrar for custom commands. Supports Brigadier commands and {@link BasicCommand}.
++ * <p>
++ * An example of a command being registered is below
++ * <pre>{@code
++ *  class YourPluginClass extends JavaPlugin {
++ *
++ *      @Override
++ *      public void onEnable() {
++ *          LifecycleEventManager<Plugin> manager = this.getLifecycleManager();
++ *          manager.registerEventHandler(LifecycleEvents.COMMANDS, event -> {
++ *              final Commands commands = event.registrar();
++ *              commands.register(
++ *                  Commands.literal("new-command")
++ *                      .executes(ctx -> {
++ *                          ctx.getSource().getSender().sendPlainMessage("some message");
++ *                          return Command.SINGLE_SUCCESS;
++ *                      })
++ *                      .build(),
++ *                  "some bukkit help description string",
++ *                  List.of("an-alias")
++ *              );
++ *          });
++ *      }
++ *  }
++ * }</pre>
++ * <p>
++ * You can also register commands in {@link io.papermc.paper.plugin.bootstrap.PluginBootstrap} getting the
++ * {@link io.papermc.paper.plugin.lifecycle.event.LifecycleEventManager} from {@link io.papermc.paper.plugin.bootstrap.BootstrapContext}.
++ * Commands registered in the {@link io.papermc.paper.plugin.bootstrap.PluginBootstrap} will be available for datapack's
++ * command function parsing. Note that commands registered via {@link io.papermc.paper.plugin.bootstrap.PluginBootstrap} with the same
++ * literals as a vanilla command will override that command within all loaded datapacks.
++ */
++@ApiStatus.Experimental
++@ApiStatus.NonExtendable
++public interface Commands extends Registrar {
++
++    /**
++     * Utility to create a literal command node builder with the correct generic.
++     *
++     * @param literal literal name
++     * @return builder
++     */
++    static @NotNull LiteralArgumentBuilder<CommandSourceStack> literal(final @NotNull String literal) {
++        return LiteralArgumentBuilder.literal(literal);
++    }
++
++    /**
++     * Utility to create a required argument builder with the correct generic.
++     *
++     * @param name name
++     * @param argumentType type
++     * @return value
++     * @param <T> argument type
++     */
++    static <T> @NotNull RequiredArgumentBuilder<CommandSourceStack, T> argument(final @NotNull String name, final @NotNull ArgumentType<T> argumentType) {
++        return RequiredArgumentBuilder.argument(name, argumentType);
++    }
++
++    /**
++     * Gets the underlying {@link CommandDispatcher}.
++     *
++     * <p><b>Note:</b> This is a delicate API that must be used with care to ensure a consistent user experience.</p>
++     *
++     * <p>When registering commands, it should be preferred to use {@link #register(PluginMeta, LiteralCommandNode, String, List) register methods}
++     * over directly registering to the dispatcher wherever possible. {@link #register(PluginMeta, LiteralCommandNode, String, List) Register methods}
++     * automatically handle command namespacing, command help, plugin association with commands, and more.</p>
++     *
++     * <p>Example use cases for this method <b>may</b> include:
++     * <ul>
++     *   <li>Implementing integration between an external command framework and Paper (although {@link #register(PluginMeta, LiteralCommandNode, String, List) register methods} should still be preferred where possible)</li>
++     *   <li>Registering new child nodes to an existing plugin command (for example an "addon" plugin to another plugin may want to do this)</li>
++     *   <li>Retrieving existing command nodes to build redirects</li>
++     * </ul>
++     * @return dispatcher
++     */
++    @ApiStatus.Experimental
++    @NotNull CommandDispatcher<CommandSourceStack> getDispatcher();
++
++    /**
++     * Registers a command for the current plugin context.
++     *
++     * <p>Commands have certain the overriding behavior of:
++     * <ul>
++     *   <li>Aliases will not override already existing commands (excluding namespaced ones)</li>
++     *   <li>The main command/namespaced label will override already existing commands</li>
++     * </ul>
++     *
++     * @param node the built literal command node
++     * @return true if the command was registered successfully
++     */
++    default boolean register(final @NotNull LiteralCommandNode<CommandSourceStack> node) {
++        return this.register(node, null, Collections.emptyList());
++    }
++
++    /**
++     * Registers a command for the current plugin context.
++     *
++     * <p>Commands have certain the overriding behavior of:
++     * <ul>
++     *   <li>Aliases will not override already existing commands (excluding namespaced ones)</li>
++     *   <li>The main command/namespaced label will override already existing commands</li>
++     * </ul>
++     *
++     * @param node the built literal command node
++     * @param description the help description for the root literal node
++     * @return true if the command was registered successfully
++     */
++    default boolean register(final @NotNull LiteralCommandNode<CommandSourceStack> node, final @Nullable String description) {
++        return this.register(node, description, Collections.emptyList());
++    }
++
++    /**
++     * Registers a command for the current plugin context.
++     *
++     * <p>Commands have certain the overriding behavior of:
++     * <ul>
++     *   <li>Aliases will not override already existing commands (excluding namespaced ones)</li>
++     *   <li>The main command/namespaced label will override already existing commands</li>
++     * </ul>
++     *
++     * @param node the built literal command node
++     * @param aliases a collection of aliases to register the literal node's command to
++     * @return true if the literal node or at least one alias was registered successfully
++     */
++    default boolean register(final @NotNull LiteralCommandNode<CommandSourceStack> node, final @NotNull List<String> aliases) {
++        return this.register(node, null, aliases);
++    }
++
++    /**
++     * Registers a command for the current plugin context.
++     *
++     * <p>Commands have certain the overriding behavior of:
++     * <ul>
++     *   <li>Aliases will not override already existing commands (excluding namespaced ones)</li>
++     *   <li>The main command/namespaced label will override already existing commands</li>
++     * </ul>
++     *
++     * @param node the built literal command node
++     * @param description the help description for the root literal node
++     * @param aliases a collection of aliases to register the literal node's command to
++     * @return true if the literal node or at least one alias was registered successfully
++     */
++    boolean register(@NotNull LiteralCommandNode<CommandSourceStack> node, @Nullable String description, @NotNull List<String> aliases);
++
++    /**
++     * Registers a command for a plugin.
++     *
++     * <p>Commands have certain the overriding behavior of:
++     * <ul>
++     *   <li>Aliases will not override already existing commands (excluding namespaced ones)</li>
++     *   <li>The main command/namespaced label will override already existing commands</li>
++     * </ul>
++     *
++     * @param pluginMeta the owning plugin's meta
++     * @param node the built literal command node
++     * @param description the help description for the root literal node
++     * @param aliases a collection of aliases to register the literal node's command to
++     * @return true if the literal node or at least one alias was registered successfully
++     */
++    boolean register(@NotNull PluginMeta pluginMeta, @NotNull LiteralCommandNode<CommandSourceStack> node, @Nullable String description, @NotNull List<String> aliases);
++
++    /**
++     * This allows configuring the registration of your command, which is not intended for public use.
++     * See {@link Commands#register(PluginMeta, LiteralCommandNode, String, List)} for more information.
++     *
++     * @param pluginMeta meta
++     * @param node node
++     * @param description description
++     * @param aliases aliases
++     * @param flags flags
++     * @return if command was registered
++     */
++    @ApiStatus.Internal
++    boolean registerWithFlags(@NotNull PluginMeta pluginMeta, @NotNull LiteralCommandNode<CommandSourceStack> node, @Nullable String description, @NotNull List<String> aliases, @NotNull Set<CommandRegistrationFlag> flags);
++
++    /**
++     * Registers a command under the same logic as {@link Commands#register(LiteralCommandNode, String, List)}.
++     *
++     * @param label command label
++     * @param basicCommand command implementation
++     * @return true if the command was registered
++     */
++    default boolean register(final @NotNull String label, final @NotNull BasicCommand basicCommand) {
++        return this.register(label, null, Collections.emptyList(), basicCommand);
++    }
++
++    /**
++     * Registers a command under the same logic as {@link Commands#register(LiteralCommandNode, String, List)}.
++     *
++     * @param label command label
++     * @param description the help description for the root literal node
++     * @param basicCommand command implementation
++     * @return true if the command was registered
++     */
++    default boolean register(final @NotNull String label, final @Nullable String description, final @NotNull BasicCommand basicCommand) {
++        return this.register(label, description, Collections.emptyList(), basicCommand);
++    }
++
++    /**
++     * Registers a command under the same logic as {@link Commands#register(LiteralCommandNode, String, List)}.
++     *
++     * @param label command label
++     * @param aliases a collection of aliases
++     * @param basicCommand command implementation
++     * @return true if at least one label was properly registered
++     * into the dispatcher
++     */
++    default boolean register(final @NotNull String label, final @NotNull List<String> aliases, final @NotNull BasicCommand basicCommand) {
++        return this.register(label, null, aliases, basicCommand);
++    }
++
++    /**
++     * Registers a command under the same logic as {@link Commands#register(LiteralCommandNode, String, List)}.
++     *
++     * @param label command label
++     * @param description the help description for the root literal node
++     * @param aliases a collection of aliases
++     * @param basicCommand command implementation
++     * @return true if at least one label was properly registered
++     * into the dispatcher
++     */
++    boolean register(@NotNull String label, @Nullable String description, @NotNull List<String> aliases, @NotNull BasicCommand basicCommand);
++
++    /**
++     * Registers a command under the same logic as {@link Commands#register(PluginMeta, LiteralCommandNode, String, List)}.
++     *
++     * @param pluginMeta the owning plugin's meta
++     * @param label command label
++     * @param description the help description for the root literal node
++     * @param aliases a collection of aliases
++     * @param basicCommand command implementation
++     * @return true if at least one label was properly registered
++     * into the dispatcher
++     */
++    boolean register(@NotNull PluginMeta pluginMeta, @NotNull String label, @Nullable String description, @NotNull List<String> aliases, @NotNull BasicCommand basicCommand);
++
++}
+diff --git a/src/main/java/io/papermc/paper/command/brigadier/MessageComponentSerializer.java b/src/main/java/io/papermc/paper/command/brigadier/MessageComponentSerializer.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..57061a3dd738416c2045e641b6080dc3f096de1a
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/command/brigadier/MessageComponentSerializer.java
+@@ -0,0 +1,24 @@
++package io.papermc.paper.command.brigadier;
++
++import com.mojang.brigadier.Message;
++import net.kyori.adventure.text.Component;
++import net.kyori.adventure.text.serializer.ComponentSerializer;
++import org.jetbrains.annotations.ApiStatus;
++import org.jetbrains.annotations.NotNull;
++
++/**
++ * A component serializer for converting between {@link Message} and {@link Component}.
++ */
++@ApiStatus.Experimental
++@ApiStatus.NonExtendable
++public interface MessageComponentSerializer extends ComponentSerializer<Component, Component, Message> {
++
++    /**
++     * A component serializer for converting between {@link Message} and {@link Component}.
++     *
++     * @return serializer instance
++     */
++    static @NotNull MessageComponentSerializer message() {
++        return MessageComponentSerializerHolder.PROVIDER.orElseThrow();
++    }
++}
+diff --git a/src/main/java/io/papermc/paper/command/brigadier/MessageComponentSerializerHolder.java b/src/main/java/io/papermc/paper/command/brigadier/MessageComponentSerializerHolder.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..2db12952461c92a64505d6646f6f49f824e83050
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/command/brigadier/MessageComponentSerializerHolder.java
+@@ -0,0 +1,12 @@
++package io.papermc.paper.command.brigadier;
++
++import java.util.Optional;
++import java.util.ServiceLoader;
++import org.jetbrains.annotations.ApiStatus;
++
++@ApiStatus.Internal
++final class MessageComponentSerializerHolder {
++
++    static final Optional<MessageComponentSerializer> PROVIDER = ServiceLoader.load(MessageComponentSerializer.class)
++        .findFirst();
++}
+diff --git a/src/main/java/io/papermc/paper/command/brigadier/argument/ArgumentTypes.java b/src/main/java/io/papermc/paper/command/brigadier/argument/ArgumentTypes.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..3a83dd51a77847317d7da952fc385a63502e41b9
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/command/brigadier/argument/ArgumentTypes.java
+@@ -0,0 +1,332 @@
++package io.papermc.paper.command.brigadier.argument;
++
++import com.mojang.brigadier.arguments.ArgumentType;
++import io.papermc.paper.command.brigadier.argument.predicate.ItemStackPredicate;
++import io.papermc.paper.command.brigadier.argument.range.DoubleRangeProvider;
++import io.papermc.paper.command.brigadier.argument.range.IntegerRangeProvider;
++import io.papermc.paper.command.brigadier.argument.resolvers.BlockPositionResolver;
++import io.papermc.paper.command.brigadier.argument.resolvers.PlayerProfileListResolver;
++import io.papermc.paper.command.brigadier.argument.resolvers.selector.EntitySelectorArgumentResolver;
++import io.papermc.paper.command.brigadier.argument.resolvers.selector.PlayerSelectorArgumentResolver;
++import io.papermc.paper.entity.LookAnchor;
++import java.util.Optional;
++import java.util.ServiceLoader;
++import java.util.UUID;
++import net.kyori.adventure.key.Key;
++import net.kyori.adventure.text.Component;
++import net.kyori.adventure.text.format.NamedTextColor;
++import net.kyori.adventure.text.format.Style;
++import org.bukkit.GameMode;
++import org.bukkit.HeightMap;
++import org.bukkit.NamespacedKey;
++import org.bukkit.World;
++import org.bukkit.block.BlockState;
++import org.bukkit.block.structure.Mirror;
++import org.bukkit.block.structure.StructureRotation;
++import org.bukkit.inventory.ItemStack;
++import org.bukkit.scoreboard.Criteria;
++import org.bukkit.scoreboard.DisplaySlot;
++import org.jetbrains.annotations.ApiStatus;
++import org.jetbrains.annotations.NotNull;
++
++/**
++ * Vanilla Minecraft includes several custom {@link ArgumentType}s that are recognized by the client.
++ * Many of these argument types include client-side completions and validation, and some include command signing context.
++ *
++ * <p>This class allows creating instances of these types for use in plugin commands, with friendly API result types.</p>
++ *
++ * <p>{@link CustomArgumentType} is provided for customizing parsing or result types server-side, while sending the vanilla argument type to the client.</p>
++ */
++@ApiStatus.Experimental
++public final class ArgumentTypes {
++
++    static final Optional<VanillaArgumentProvider> PROVIDER = ServiceLoader.load(VanillaArgumentProvider.class)
++        .findFirst();
++
++    /**
++     * Represents a selector that can capture any
++     * single entity.
++     *
++     * @return argument that takes one entity
++     */
++    public static @NotNull ArgumentType<EntitySelectorArgumentResolver> entity() {
++        return provider().entity();
++    }
++
++    /**
++     * Represents a selector that can capture multiple
++     * entities.
++     *
++     * @return argument that takes multiple entities
++     */
++    public static @NotNull ArgumentType<EntitySelectorArgumentResolver> entities() {
++        return provider().entities();
++    }
++
++    /**
++     * Represents a selector that can capture a
++     * singular player entity.
++     *
++     * @return argument that takes one player
++     */
++    public static @NotNull ArgumentType<PlayerSelectorArgumentResolver> player() {
++        return provider().player();
++    }
++
++    /**
++     * Represents a selector that can capture multiple
++     * player entities.
++     *
++     * @return argument that takes multiple players
++     */
++    public static @NotNull ArgumentType<PlayerSelectorArgumentResolver> players() {
++        return provider().players();
++    }
++
++    /**
++     * A selector argument that provides a list
++     * of player profiles.
++     *
++     * @return player profile arguments
++     */
++    public static @NotNull ArgumentType<PlayerProfileListResolver> playerProfiles() {
++        return provider().playerProfiles();
++    }
++
++    /**
++     * A block position argument.
++     *
++     * @return argument
++     */
++    public static @NotNull ArgumentType<BlockPositionResolver> blockPosition() {
++        return provider().blockPosition();
++    }
++
++    /**
++     * A blockstate argument which will provide rich parsing for specifying
++     * the specific block variant and then the block entity NBT if applicable.
++     *
++     * @return argument
++     */
++    public static @NotNull ArgumentType<BlockState> blockState() {
++        return provider().blockState();
++    }
++
++    /**
++     * An ItemStack argument which provides rich parsing for
++     * specifying item material and item NBT information.
++     *
++     * @return argument
++     */
++    public static @NotNull ArgumentType<ItemStack> itemStack() {
++        return provider().itemStack();
++    }
++
++    /**
++     * An item predicate argument.
++     *
++     * @return argument
++     */
++    public static @NotNull ArgumentType<ItemStackPredicate> itemPredicate() {
++        return provider().itemStackPredicate();
++    }
++
++    /**
++     * An argument for parsing {@link NamedTextColor}s.
++     *
++     * @return argument
++     */
++    public static @NotNull ArgumentType<NamedTextColor> namedColor() {
++        return provider().namedColor();
++    }
++
++    /**
++     * A component argument.
++     *
++     * @return argument
++     */
++    public static @NotNull ArgumentType<Component> component() {
++        return provider().component();
++    }
++
++    /**
++     * A style argument.
++     *
++     * @return argument
++     */
++    public static @NotNull ArgumentType<Style> style() {
++        return provider().style();
++    }
++
++    /**
++     * A signed message argument.
++     * This argument can be resolved to retrieve the underlying
++     * signed message.
++     *
++     * @return argument
++     */
++    public static @NotNull ArgumentType<SignedMessageResolver> signedMessage() {
++        return provider().signedMessage();
++    }
++
++    /**
++     * A scoreboard display slot argument.
++     *
++     * @return argument
++     */
++    public static @NotNull ArgumentType<DisplaySlot> scoreboardDisplaySlot() {
++        return provider().scoreboardDisplaySlot();
++    }
++
++    /**
++     * A namespaced key argument.
++     *
++     * @return argument
++     */
++    public static @NotNull ArgumentType<NamespacedKey> namespacedKey() {
++        return provider().namespacedKey();
++    }
++
++    /**
++     * A key argument.
++     *
++     * @return argument
++     */
++    // include both key types as we are slowly moving to use adventure's key
++    public static @NotNull ArgumentType<Key> key() {
++        return provider().key();
++    }
++
++    /**
++     * An inclusive range of integers that may be unbounded on either end.
++     *
++     * @return argument
++     */
++    public static @NotNull ArgumentType<IntegerRangeProvider> integerRange() {
++        return provider().integerRange();
++    }
++
++    /**
++     * An inclusive range of doubles that may be unbounded on either end.
++     *
++     * @return argument
++     */
++    public static @NotNull ArgumentType<DoubleRangeProvider> doubleRange() {
++        return provider().doubleRange();
++    }
++
++    /**
++     * A world argument.
++     *
++     * @return argument
++     */
++    public static @NotNull ArgumentType<World> world() {
++        return provider().world();
++    }
++
++    /**
++     * A game mode argument.
++     *
++     * @return argument
++     */
++    public static @NotNull ArgumentType<GameMode> gameMode() {
++        return provider().gameMode();
++    }
++
++    /**
++     * A argument for getting a heightmap type.
++     *
++     * @return argument
++     */
++    public static @NotNull ArgumentType<HeightMap> heightMap() {
++        return provider().heightMap();
++    }
++
++    /**
++     * A uuid argument.
++     *
++     * @return argument
++     */
++    public static @NotNull ArgumentType<UUID> uuid() {
++        return provider().uuid();
++    }
++
++    /**
++     * An objective criteria argument
++     *
++     * @return argument
++     */
++    public static @NotNull ArgumentType<Criteria> objectiveCriteria() {
++        return provider().objectiveCriteria();
++    }
++
++    /**
++     * An entity anchor argument.
++     *
++     * @return argument
++     */
++    public static @NotNull ArgumentType<LookAnchor> entityAnchor() {
++        return provider().entityAnchor();
++    }
++
++    /**
++     * A time argument, returning the number of ticks.
++     * <p>Examples:
++     * <ul>
++     * <li> "1d"
++     * <li> "5s"
++     * <li> "2"
++     * <li> "6t"
++     * </ul>
++     *
++     *
++     * @return argument
++     */
++    public static @NotNull ArgumentType<Integer> time() {
++        return time(0);
++    }
++
++    /**
++     * A time argument, returning the number of ticks.
++     * <p>Examples:
++     * <ul>
++     * <li> "1d"
++     * <li> "5s"
++     * <li> "2"
++     * <li> "6t"
++     * </ul>
++     *
++     * @param mintime The minimum time required for this argument.
++     * @return argument
++     */
++    public static @NotNull ArgumentType<Integer> time(final int mintime) {
++        return provider().time(mintime);
++    }
++
++    /**
++     * A template mirror argument
++     * <p>
++     * See {@link Mirror} for more information.
++     *
++     * @return argument
++     */
++    public static @NotNull ArgumentType<Mirror> templateMirror() {
++        return provider().templateMirror();
++    }
++
++    /**
++     * A template rotation argument.
++     *
++     * @return argument
++     */
++    public static @NotNull ArgumentType<StructureRotation> templateRotation() {
++        return provider().templateRotation();
++    }
++
++    private static VanillaArgumentProvider provider() {
++        return PROVIDER.orElseThrow();
++    }
++
++    private ArgumentTypes() {
++    }
++}
+diff --git a/src/main/java/io/papermc/paper/command/brigadier/argument/CustomArgumentType.java b/src/main/java/io/papermc/paper/command/brigadier/argument/CustomArgumentType.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..02acac7f9186677d19c0a62095cc3012bc112961
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/command/brigadier/argument/CustomArgumentType.java
+@@ -0,0 +1,106 @@
++package io.papermc.paper.command.brigadier.argument;
++
++import com.mojang.brigadier.StringReader;
++import com.mojang.brigadier.arguments.ArgumentType;
++import com.mojang.brigadier.context.CommandContext;
++import com.mojang.brigadier.exceptions.CommandSyntaxException;
++import com.mojang.brigadier.suggestion.Suggestions;
++import com.mojang.brigadier.suggestion.SuggestionsBuilder;
++import java.util.Collection;
++import java.util.concurrent.CompletableFuture;
++import org.jetbrains.annotations.ApiStatus;
++import org.jetbrains.annotations.NotNull;
++
++/**
++ * An argument type that wraps around a native-to-vanilla argument type.
++ * This argument receives special handling in that the native argument type will
++ * be sent to the client for possible client-side completions and syntax validation.
++ * <p>
++ * When implementing this class, you have to create your own parsing logic from a
++ * {@link StringReader}. If only want to convert from the native type ({@code N}) to the custom
++ * type ({@code T}), implement {@link Converted} instead.
++ *
++ * @param <T> custom type
++ * @param <N> type with an argument native to vanilla Minecraft (from {@link ArgumentTypes})
++ */
++@ApiStatus.Experimental
++public interface CustomArgumentType<T, N> extends ArgumentType<T> {
++
++    /**
++     * Parses the argument into the custom type ({@code T}). Keep in mind
++     * that this parsing will be done on the server. This means that if
++     * you throw a {@link CommandSyntaxException} during parsing, this
++     * will only show up to the user after the user has executed the command
++     * not while they are still entering it.
++     *
++     * @param reader string reader input
++     * @return parsed value
++     * @throws CommandSyntaxException if an error occurs while parsing
++     */
++    @Override
++    @NotNull T parse(final @NotNull StringReader reader) throws CommandSyntaxException;
++
++    /**
++     * Gets the native type that this argument uses,
++     * the type that is sent to the client.
++     *
++     * @return native argument type
++     */
++    @NotNull ArgumentType<N> getNativeType();
++
++    /**
++     * Cannot be controlled by the server.
++     * Returned in cases where there are multiple arguments in the same node.
++     * This helps differentiate and tell the player what the possible inputs are.
++     *
++     * @return client set examples
++     */
++    @Override
++    @ApiStatus.NonExtendable
++    default @NotNull Collection<String> getExamples() {
++        return this.getNativeType().getExamples();
++    }
++
++    /**
++     * Provides a list of suggestions to show to the client.
++     *
++     * @param context command context
++     * @param builder suggestion builder
++     * @return suggestions
++     * @param <S> context type
++     */
++    @Override
++    default <S> @NotNull CompletableFuture<Suggestions> listSuggestions(final @NotNull CommandContext<S> context, final @NotNull SuggestionsBuilder builder) {
++        return ArgumentType.super.listSuggestions(context, builder);
++    }
++
++    /**
++     * An argument type that wraps around a native-to-vanilla argument type.
++     * This argument receives special handling in that the native argument type will
++     * be sent to the client for possible client-side completions and syntax validation.
++     * <p>
++     * The parsed native type will be converted via {@link #convert(Object)}.
++     * Implement {@link CustomArgumentType} if you want to handle parsing the type manually.
++     *
++     * @param <T> custom type
++     * @param <N> type with an argument native to vanilla Minecraft (from {@link ArgumentTypes})
++     */
++    @ApiStatus.Experimental
++    interface Converted<T, N> extends CustomArgumentType<T, N> {
++
++        @ApiStatus.NonExtendable
++        @Override
++        default @NotNull T parse(final @NotNull StringReader reader) throws CommandSyntaxException {
++            return this.convert(this.getNativeType().parse(reader));
++        }
++
++        /**
++         * Converts the value from the native type to the custom argument type.
++         *
++         * @param nativeType native argument provided value
++         * @return converted value
++         * @throws CommandSyntaxException if an exception occurs while parsing
++         */
++        @NotNull T convert(@NotNull N nativeType) throws CommandSyntaxException;
++    }
++}
+diff --git a/src/main/java/io/papermc/paper/command/brigadier/argument/SignedMessageResolver.java b/src/main/java/io/papermc/paper/command/brigadier/argument/SignedMessageResolver.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..159b691e7a1a7066f3e706e80d75ca8f87a3a964
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/command/brigadier/argument/SignedMessageResolver.java
+@@ -0,0 +1,41 @@
++package io.papermc.paper.command.brigadier.argument;
++
++import com.mojang.brigadier.context.CommandContext;
++import com.mojang.brigadier.exceptions.CommandSyntaxException;
++import io.papermc.paper.command.brigadier.CommandSourceStack;
++import java.util.concurrent.CompletableFuture;
++import net.kyori.adventure.chat.SignedMessage;
++import org.jetbrains.annotations.ApiStatus;
++import org.jetbrains.annotations.NotNull;
++
++/**
++ * A resolver for a {@link SignedMessage}
++ *
++ * @see ArgumentTypes#signedMessage()
++ */
++@ApiStatus.Experimental
++@ApiStatus.NonExtendable
++public interface SignedMessageResolver {
++
++    /**
++     * Gets the string content of the message
++     *
++     * @return string content
++     */
++    @NotNull String content();
++
++    /**
++     * Resolves this signed message. This will the {@link CommandContext}
++     * and signed arguments sent by the client.
++     * <p>
++     * In the case that signed message information isn't provided, a "system"
++     * signed message will be returned instead.
++     *
++     * @param argumentName argument name
++     * @param context the command context
++     * @return a completable future for the {@link SignedMessage}
++     * @throws CommandSyntaxException syntax exception
++     */
++    @NotNull CompletableFuture<SignedMessage> resolveSignedMessage(@NotNull String argumentName, @NotNull CommandContext<CommandSourceStack> context) throws CommandSyntaxException;
++
++}
+diff --git a/src/main/java/io/papermc/paper/command/brigadier/argument/VanillaArgumentProvider.java b/src/main/java/io/papermc/paper/command/brigadier/argument/VanillaArgumentProvider.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..e3929f63fdc3fb7d22be5c87c9ee0891c047b29d
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/command/brigadier/argument/VanillaArgumentProvider.java
+@@ -0,0 +1,89 @@
++package io.papermc.paper.command.brigadier.argument;
++
++import com.mojang.brigadier.arguments.ArgumentType;
++import io.papermc.paper.command.brigadier.argument.predicate.ItemStackPredicate;
++import io.papermc.paper.command.brigadier.argument.range.DoubleRangeProvider;
++import io.papermc.paper.command.brigadier.argument.range.IntegerRangeProvider;
++import io.papermc.paper.command.brigadier.argument.resolvers.BlockPositionResolver;
++import io.papermc.paper.command.brigadier.argument.resolvers.PlayerProfileListResolver;
++import io.papermc.paper.command.brigadier.argument.resolvers.selector.EntitySelectorArgumentResolver;
++import io.papermc.paper.command.brigadier.argument.resolvers.selector.PlayerSelectorArgumentResolver;
++import io.papermc.paper.entity.LookAnchor;
++import java.util.UUID;
++import net.kyori.adventure.key.Key;
++import net.kyori.adventure.text.Component;
++import net.kyori.adventure.text.format.NamedTextColor;
++import net.kyori.adventure.text.format.Style;
++import org.bukkit.GameMode;
++import org.bukkit.HeightMap;
++import org.bukkit.NamespacedKey;
++import org.bukkit.World;
++import org.bukkit.block.BlockState;
++import org.bukkit.block.structure.Mirror;
++import org.bukkit.block.structure.StructureRotation;
++import org.bukkit.inventory.ItemStack;
++import org.bukkit.scoreboard.Criteria;
++import org.bukkit.scoreboard.DisplaySlot;
++import org.checkerframework.checker.nullness.qual.NonNull;
++import org.checkerframework.framework.qual.DefaultQualifier;
++import org.jetbrains.annotations.ApiStatus;
++
++@ApiStatus.Internal
++@DefaultQualifier(NonNull.class)
++interface VanillaArgumentProvider {
++
++    ArgumentType<EntitySelectorArgumentResolver> entity();
++
++    ArgumentType<PlayerSelectorArgumentResolver> player();
++
++    ArgumentType<EntitySelectorArgumentResolver> entities();
++
++    ArgumentType<PlayerSelectorArgumentResolver> players();
++
++    ArgumentType<PlayerProfileListResolver> playerProfiles();
++
++    ArgumentType<BlockPositionResolver> blockPosition();
++
++    ArgumentType<BlockState> blockState();
++
++    ArgumentType<ItemStack> itemStack();
++
++    ArgumentType<ItemStackPredicate> itemStackPredicate();
++
++    ArgumentType<NamedTextColor> namedColor();
++
++    ArgumentType<Component> component();
++
++    ArgumentType<Style> style();
++
++    ArgumentType<SignedMessageResolver> signedMessage();
++
++    ArgumentType<DisplaySlot> scoreboardDisplaySlot();
++
++    ArgumentType<NamespacedKey> namespacedKey();
++
++    // include both key types as we are slowly moving to use adventure's key
++    ArgumentType<Key> key();
++
++    ArgumentType<IntegerRangeProvider> integerRange();
++
++    ArgumentType<DoubleRangeProvider> doubleRange();
++
++    ArgumentType<World> world();
++    
++    ArgumentType<GameMode> gameMode();
++
++    ArgumentType<HeightMap> heightMap();
++
++    ArgumentType<UUID> uuid();
++
++    ArgumentType<Criteria> objectiveCriteria();
++
++    ArgumentType<LookAnchor> entityAnchor();
++
++    ArgumentType<Integer> time(int minTicks);
++
++    ArgumentType<Mirror> templateMirror();
++
++    ArgumentType<StructureRotation> templateRotation();
++}
+diff --git a/src/main/java/io/papermc/paper/command/brigadier/argument/predicate/ItemStackPredicate.java b/src/main/java/io/papermc/paper/command/brigadier/argument/predicate/ItemStackPredicate.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..ba0cfb3c53f6a5a29b1719ed271a8f13d5f52f24
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/command/brigadier/argument/predicate/ItemStackPredicate.java
+@@ -0,0 +1,15 @@
++package io.papermc.paper.command.brigadier.argument.predicate;
++
++import java.util.function.Predicate;
++import org.bukkit.inventory.ItemStack;
++import org.jetbrains.annotations.ApiStatus;
++
++/**
++ * A predicate for ItemStack.
++ *
++ * @see io.papermc.paper.command.brigadier.argument.ArgumentTypes#itemPredicate()
++ */
++@ApiStatus.Experimental
++@ApiStatus.NonExtendable
++public interface ItemStackPredicate extends Predicate<ItemStack> {
++}
+diff --git a/src/main/java/io/papermc/paper/command/brigadier/argument/range/DoubleRangeProvider.java b/src/main/java/io/papermc/paper/command/brigadier/argument/range/DoubleRangeProvider.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..82c978ba42a787fd0cdc936e42c8e12ffa4ff8bf
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/command/brigadier/argument/range/DoubleRangeProvider.java
+@@ -0,0 +1,14 @@
++package io.papermc.paper.command.brigadier.argument.range;
++
++import org.jetbrains.annotations.ApiStatus;
++
++/**
++ * A provider for a {@link com.google.common.collect.Range} of doubles.
++ *
++ * @see io.papermc.paper.command.brigadier.argument.ArgumentTypes#doubleRange()
++ */
++@ApiStatus.Experimental
++@ApiStatus.NonExtendable
++public non-sealed interface DoubleRangeProvider extends RangeProvider<Double> {
++
++}
+diff --git a/src/main/java/io/papermc/paper/command/brigadier/argument/range/IntegerRangeProvider.java b/src/main/java/io/papermc/paper/command/brigadier/argument/range/IntegerRangeProvider.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..06ffff68d2652ef8eb40aa723803c24ecd013721
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/command/brigadier/argument/range/IntegerRangeProvider.java
+@@ -0,0 +1,14 @@
++package io.papermc.paper.command.brigadier.argument.range;
++
++import org.jetbrains.annotations.ApiStatus;
++
++/**
++ * A provider for a {@link com.google.common.collect.Range} of integers.
++ *
++ * @see io.papermc.paper.command.brigadier.argument.ArgumentTypes#integerRange()
++ */
++@ApiStatus.Experimental
++@ApiStatus.NonExtendable
++public non-sealed interface IntegerRangeProvider extends RangeProvider<Integer> {
++
++}
+diff --git a/src/main/java/io/papermc/paper/command/brigadier/argument/range/RangeProvider.java b/src/main/java/io/papermc/paper/command/brigadier/argument/range/RangeProvider.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..6cf30e7a741d4c4b28e35e349025743e841e87bd
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/command/brigadier/argument/range/RangeProvider.java
+@@ -0,0 +1,16 @@
++package io.papermc.paper.command.brigadier.argument.range;
++
++import com.google.common.collect.Range;
++import org.jetbrains.annotations.ApiStatus;
++import org.jetbrains.annotations.NotNull;
++
++@ApiStatus.Experimental
++public sealed interface RangeProvider<T extends Comparable<?>> permits DoubleRangeProvider, IntegerRangeProvider {
++
++    /**
++     * Provides the given range.
++     * @return range
++     */
++    @NotNull
++    Range<T> range();
++}
+diff --git a/src/main/java/io/papermc/paper/command/brigadier/argument/resolvers/ArgumentResolver.java b/src/main/java/io/papermc/paper/command/brigadier/argument/resolvers/ArgumentResolver.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..dea24d91999f78b77fe85221130d87a54edf004a
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/command/brigadier/argument/resolvers/ArgumentResolver.java
+@@ -0,0 +1,26 @@
++package io.papermc.paper.command.brigadier.argument.resolvers;
++
++import com.mojang.brigadier.exceptions.CommandSyntaxException;
++import io.papermc.paper.command.brigadier.CommandSourceStack;
++import org.jetbrains.annotations.ApiStatus;
++import org.jetbrains.annotations.NotNull;
++
++/**
++ * An {@link ArgumentResolver} is capable of resolving
++ * an argument value using a {@link CommandSourceStack}.
++ *
++ * @param <T> resolved type
++ * @see io.papermc.paper.command.brigadier.argument.ArgumentTypes
++ */
++@ApiStatus.Experimental
++@ApiStatus.NonExtendable
++public interface ArgumentResolver<T> {
++
++    /**
++     * Resolves the argument with the given
++     * command source stack.
++     * @param sourceStack source stack
++     * @return resolved
++     */
++    @NotNull T resolve(@NotNull CommandSourceStack sourceStack) throws CommandSyntaxException;
++}
+diff --git a/src/main/java/io/papermc/paper/command/brigadier/argument/resolvers/BlockPositionResolver.java b/src/main/java/io/papermc/paper/command/brigadier/argument/resolvers/BlockPositionResolver.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..908f40dbf3e52bdfc8577a8916884e9fa4557a7c
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/command/brigadier/argument/resolvers/BlockPositionResolver.java
+@@ -0,0 +1,16 @@
++package io.papermc.paper.command.brigadier.argument.resolvers;
++
++import io.papermc.paper.command.brigadier.CommandSourceStack;
++import io.papermc.paper.math.BlockPosition;
++import org.jetbrains.annotations.ApiStatus;
++
++/**
++ * An {@link ArgumentResolver} that's capable of resolving
++ * a block position argument value using a {@link CommandSourceStack}.
++ *
++ * @see io.papermc.paper.command.brigadier.argument.ArgumentTypes#blockPosition()
++ */
++@ApiStatus.Experimental
++@ApiStatus.NonExtendable
++public interface BlockPositionResolver extends ArgumentResolver<BlockPosition> {
++}
+diff --git a/src/main/java/io/papermc/paper/command/brigadier/argument/resolvers/PlayerProfileListResolver.java b/src/main/java/io/papermc/paper/command/brigadier/argument/resolvers/PlayerProfileListResolver.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..89024e67fd81a9cd8a9d1ef5bb78d1c8bcb4fcc5
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/command/brigadier/argument/resolvers/PlayerProfileListResolver.java
+@@ -0,0 +1,17 @@
++package io.papermc.paper.command.brigadier.argument.resolvers;
++
++import com.destroystokyo.paper.profile.PlayerProfile;
++import io.papermc.paper.command.brigadier.CommandSourceStack;
++import java.util.Collection;
++import org.jetbrains.annotations.ApiStatus;
++
++/**
++ * An {@link ArgumentResolver} that's capable of resolving
++ *  argument value using a {@link CommandSourceStack}.
++ *
++ * @see io.papermc.paper.command.brigadier.argument.ArgumentTypes#playerProfiles()
++ */
++@ApiStatus.Experimental
++@ApiStatus.NonExtendable
++public interface PlayerProfileListResolver extends ArgumentResolver<Collection<PlayerProfile>> {
++}
+diff --git a/src/main/java/io/papermc/paper/command/brigadier/argument/resolvers/selector/EntitySelectorArgumentResolver.java b/src/main/java/io/papermc/paper/command/brigadier/argument/resolvers/selector/EntitySelectorArgumentResolver.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..15d05c28040180a00b16cf05c8b059ce66793fa8
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/command/brigadier/argument/resolvers/selector/EntitySelectorArgumentResolver.java
+@@ -0,0 +1,19 @@
++package io.papermc.paper.command.brigadier.argument.resolvers.selector;
++
++import io.papermc.paper.command.brigadier.CommandSourceStack;
++import io.papermc.paper.command.brigadier.argument.resolvers.ArgumentResolver;
++import java.util.List;
++import org.bukkit.entity.Entity;
++import org.jetbrains.annotations.ApiStatus;
++
++/**
++ * An {@link ArgumentResolver} that's capable of resolving
++ * an entity selector argument value using a {@link CommandSourceStack}.
++ *
++ * @see io.papermc.paper.command.brigadier.argument.ArgumentTypes#entity()
++ * @see io.papermc.paper.command.brigadier.argument.ArgumentTypes#entities()
++ */
++@ApiStatus.Experimental
++@ApiStatus.NonExtendable
++public interface EntitySelectorArgumentResolver extends SelectorArgumentResolver<List<Entity>> {
++}
+diff --git a/src/main/java/io/papermc/paper/command/brigadier/argument/resolvers/selector/PlayerSelectorArgumentResolver.java b/src/main/java/io/papermc/paper/command/brigadier/argument/resolvers/selector/PlayerSelectorArgumentResolver.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..a973555b7a013df7f9700841f41220c8afa0301e
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/command/brigadier/argument/resolvers/selector/PlayerSelectorArgumentResolver.java
+@@ -0,0 +1,19 @@
++package io.papermc.paper.command.brigadier.argument.resolvers.selector;
++
++import io.papermc.paper.command.brigadier.CommandSourceStack;
++import io.papermc.paper.command.brigadier.argument.resolvers.ArgumentResolver;
++import java.util.List;
++import org.bukkit.entity.Player;
++import org.jetbrains.annotations.ApiStatus;
++
++/**
++ * An {@link ArgumentResolver} that's capable of resolving
++ * a player selector argument value using a {@link CommandSourceStack}.
++ *
++ * @see io.papermc.paper.command.brigadier.argument.ArgumentTypes#player()
++ * @see io.papermc.paper.command.brigadier.argument.ArgumentTypes#players()
++ */
++@ApiStatus.Experimental
++@ApiStatus.NonExtendable
++public interface PlayerSelectorArgumentResolver extends SelectorArgumentResolver<List<Player>> {
++}
+diff --git a/src/main/java/io/papermc/paper/command/brigadier/argument/resolvers/selector/SelectorArgumentResolver.java b/src/main/java/io/papermc/paper/command/brigadier/argument/resolvers/selector/SelectorArgumentResolver.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..906ce6eff30ebd9ec3010ce03b471418843e6588
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/command/brigadier/argument/resolvers/selector/SelectorArgumentResolver.java
+@@ -0,0 +1,17 @@
++package io.papermc.paper.command.brigadier.argument.resolvers.selector;
++
++import io.papermc.paper.command.brigadier.CommandSourceStack;
++import io.papermc.paper.command.brigadier.argument.resolvers.ArgumentResolver;
++import org.jetbrains.annotations.ApiStatus;
++
++/**
++ * An {@link ArgumentResolver} that's capable of resolving
++ * a selector argument value using a {@link CommandSourceStack}.
++ *
++ * @param <T> resolved type
++ * @see <a href="https://minecraft.wiki/w/Target_selectors">Target Selectors</a>
++ */
++@ApiStatus.Experimental
++@ApiStatus.NonExtendable
++public interface SelectorArgumentResolver<T> extends ArgumentResolver<T> {
++}
+diff --git a/src/main/java/io/papermc/paper/plugin/lifecycle/event/types/LifecycleEvents.java b/src/main/java/io/papermc/paper/plugin/lifecycle/event/types/LifecycleEvents.java
+index 304f978e40e1759bb19704cc5cec399500905195..1fab48593c567fe05b085ac6e12dc22556cf0b92 100644
+--- a/src/main/java/io/papermc/paper/plugin/lifecycle/event/types/LifecycleEvents.java
++++ b/src/main/java/io/papermc/paper/plugin/lifecycle/event/types/LifecycleEvents.java
+@@ -1,9 +1,11 @@
+ package io.papermc.paper.plugin.lifecycle.event.types;
+ 
++import io.papermc.paper.command.brigadier.Commands;
+ import io.papermc.paper.plugin.bootstrap.BootstrapContext;
+ import io.papermc.paper.plugin.lifecycle.event.LifecycleEvent;
+ import io.papermc.paper.plugin.lifecycle.event.LifecycleEventManager;
+ import io.papermc.paper.plugin.lifecycle.event.LifecycleEventOwner;
++import io.papermc.paper.plugin.lifecycle.event.registrar.ReloadableRegistrarEvent;
+ import org.bukkit.plugin.Plugin;
+ import org.jetbrains.annotations.ApiStatus;
+ 
+@@ -15,6 +17,13 @@ import org.jetbrains.annotations.ApiStatus;
+ @ApiStatus.Experimental
+ public final class LifecycleEvents {
+ 
++    /**
++     * This event is for registering commands to the server's brigadier command system. You can register a handler for this event in
++     * {@link org.bukkit.plugin.java.JavaPlugin#onEnable()} or {@link io.papermc.paper.plugin.bootstrap.PluginBootstrap#bootstrap(BootstrapContext)}.
++     * @see Commands an example of a command being registered
++     */
++    public static final LifecycleEventType.Prioritizable<LifecycleEventOwner, ReloadableRegistrarEvent<Commands>> COMMANDS = prioritized("commands", LifecycleEventOwner.class);
++
+     //<editor-fold desc="helper methods" defaultstate="collapsed">
+     @ApiStatus.Internal
+     private static <E extends LifecycleEvent> LifecycleEventType.Monitorable<Plugin, E> plugin(final String name) {
+diff --git a/src/main/java/org/bukkit/command/Command.java b/src/main/java/org/bukkit/command/Command.java
+index b3a2c274f05156fd603bcc7a68ab41265f2eaf44..c7cdc2ad8a2c43e8c0fcaa1761d3b81726c5ebcb 100644
+--- a/src/main/java/org/bukkit/command/Command.java
++++ b/src/main/java/org/bukkit/command/Command.java
+@@ -512,4 +512,9 @@ public abstract class Command {
+     public String toString() {
+         return getClass().getName() + '(' + name + ')';
+     }
++
++    // Paper start
++    @org.jetbrains.annotations.ApiStatus.Internal
++    public boolean canBeOverriden() { return false; }
++    // Paper end
+ }
+diff --git a/src/main/java/org/bukkit/command/FormattedCommandAlias.java b/src/main/java/org/bukkit/command/FormattedCommandAlias.java
+index 9d4f553c04784cca63901a56a7aea62a5cae1d72..abe256e1e45ce28036da4aa1586715bc8a1a3414 100644
+--- a/src/main/java/org/bukkit/command/FormattedCommandAlias.java
++++ b/src/main/java/org/bukkit/command/FormattedCommandAlias.java
+@@ -117,7 +117,7 @@ public class FormattedCommandAlias extends Command {
+             index = formatString.indexOf('$', index);
+         }
+ 
+-        return formatString;
++        return formatString.trim(); // Paper - Causes an extra space at the end, breaks with brig commands
+     }
+ 
+     @NotNull
+diff --git a/src/main/java/org/bukkit/command/SimpleCommandMap.java b/src/main/java/org/bukkit/command/SimpleCommandMap.java
+index ac9a28922f8a556944a4c3649d74c32c622f0cb0..c3a9cf65db73ed534bf20996c7f05b5eb0aaebe1 100644
+--- a/src/main/java/org/bukkit/command/SimpleCommandMap.java
++++ b/src/main/java/org/bukkit/command/SimpleCommandMap.java
+@@ -22,10 +22,14 @@ import org.jetbrains.annotations.NotNull;
+ import org.jetbrains.annotations.Nullable;
+ 
+ public class SimpleCommandMap implements CommandMap {
+-    protected final Map<String, Command> knownCommands = new HashMap<String, Command>();
++    protected final Map<String, Command> knownCommands; // Paper
+     private final Server server;
+ 
+-    public SimpleCommandMap(@NotNull final Server server) {
++    // Paper start
++    @org.jetbrains.annotations.ApiStatus.Internal
++    public SimpleCommandMap(@NotNull final Server server, Map<String, Command> backing) {
++        this.knownCommands = backing;
++    // Paper end
+         this.server = server;
+         setDefaultCommands();
+     }
+@@ -102,7 +106,10 @@ public class SimpleCommandMap implements CommandMap {
+      */
+     private synchronized boolean register(@NotNull String label, @NotNull Command command, boolean isAlias, @NotNull String fallbackPrefix) {
+         knownCommands.put(fallbackPrefix + ":" + label, command);
+-        if ((command instanceof BukkitCommand || isAlias) && knownCommands.containsKey(label)) {
++        // Paper start
++        Command known = knownCommands.get(label);
++        if ((command instanceof BukkitCommand || isAlias) && (known != null && !known.canBeOverriden())) {
++        // Paper end
+             // Request is for an alias/fallback command and it conflicts with
+             // a existing command or previous alias ignore it
+             // Note: This will mean it gets removed from the commands list of active aliases
+@@ -114,7 +121,9 @@ public class SimpleCommandMap implements CommandMap {
+         // If the command exists but is an alias we overwrite it, otherwise we return
+         Command conflict = knownCommands.get(label);
+         if (conflict != null && conflict.getLabel().equals(label)) {
++            if (!conflict.canBeOverriden()) { // Paper
+             return false;
++            } // Paper
+         }
+ 
+         if (!isAlias) {
+diff --git a/src/main/java/org/bukkit/command/defaults/ReloadCommand.java b/src/main/java/org/bukkit/command/defaults/ReloadCommand.java
+index 3ec32b46264cfff857b50129b5e0fa5584943ec6..bdfe68b386b5ca2878475e548d3c9a3808fce848 100644
+--- a/src/main/java/org/bukkit/command/defaults/ReloadCommand.java
++++ b/src/main/java/org/bukkit/command/defaults/ReloadCommand.java
+@@ -18,6 +18,9 @@ public class ReloadCommand extends BukkitCommand {
+         this.setAliases(Arrays.asList("rl"));
+     }
+ 
++    @org.jetbrains.annotations.ApiStatus.Internal // Paper
++    public static final String RELOADING_DISABLED_MESSAGE = "A lifecycle event handler has been registered which makes reloading plugins not possible"; // Paper
++
+     @Override
+     public boolean execute(@NotNull CommandSender sender, @NotNull String currentAlias, @NotNull String[] args) { // Paper
+         if (!testPermission(sender)) return true;
+@@ -51,7 +54,16 @@ public class ReloadCommand extends BukkitCommand {
+ 
+         Command.broadcastCommandMessage(sender, ChatColor.RED + "Please note that this command is not supported and may cause issues when using some plugins.");
+         Command.broadcastCommandMessage(sender, ChatColor.RED + "If you encounter any issues please use the /stop command to restart your server.");
+-        Bukkit.reload();
++        // Paper start - lifecycle events
++        try {
++            Bukkit.reload();
++        } catch (final IllegalStateException ex) {
++            if (ex.getMessage().equals(RELOADING_DISABLED_MESSAGE)) {
++                Command.broadcastCommandMessage(sender, ChatColor.RED + RELOADING_DISABLED_MESSAGE);
++                return true;
++            }
++        }
++        // Paper end - lifecycle events
+         Command.broadcastCommandMessage(sender, ChatColor.GREEN + "Reload complete.");
+ 
+         return true;

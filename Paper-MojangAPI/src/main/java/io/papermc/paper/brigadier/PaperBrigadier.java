@@ -1,6 +1,7 @@
 package io.papermc.paper.brigadier;
 
 import com.mojang.brigadier.Message;
+import io.papermc.paper.command.brigadier.MessageComponentSerializer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.ComponentLike;
 import net.kyori.adventure.text.TextComponent;
@@ -8,7 +9,9 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 
 /**
  * Helper methods to bridge the gaps between Brigadier and Paper-MojangAPI.
+ * @deprecated For removal, see {@link io.papermc.paper.command.brigadier.Commands} on how to use the new Brigadier API.
  */
+@Deprecated(forRemoval = true)
 public final class PaperBrigadier {
     private PaperBrigadier() {
         throw new RuntimeException("PaperBrigadier is not to be instantiated!");
@@ -23,7 +26,7 @@ public final class PaperBrigadier {
      * @return A new Brigadier {@link Message}
      */
     public static @NonNull Message message(final @NonNull ComponentLike componentLike) {
-        return PaperBrigadierProvider.instance().message(componentLike);
+        return MessageComponentSerializer.message().serialize(componentLike.asComponent());
     }
 
     /**
@@ -37,6 +40,6 @@ public final class PaperBrigadier {
      * @return The created {@link Component}
      */
     public static @NonNull Component componentFromMessage(final @NonNull Message message) {
-        return PaperBrigadierProvider.instance().componentFromMessage(message);
+        return MessageComponentSerializer.message().deserialize(message);
     }
 }
